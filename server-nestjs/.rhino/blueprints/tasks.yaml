@@ -1,0 +1,123 @@
+model: Task
+table: tasks
+
+options:
+  belongs_to_organization: false
+  soft_deletes: true
+  audit_trail: true
+  # BP-004 in @rhino-dev/rhino-nestjs@0.2.0: declare indirect
+  # tenancy via owner_chain. Task → Project → Organization.
+  owner_chain: project
+
+# BP-004: cross-tenant FK validation — projectId must resolve to an
+# in-org project; assignedTo must exist as a user.
+fk_constraints:
+  projectId: project
+  assignedTo: user
+
+columns:
+  title:
+    type: string
+    nullable: false
+    filterable: true
+    sortable: true
+    searchable: true
+  description:
+    type: text
+    nullable: true
+  status:
+    type: string
+    nullable: false
+    default: "todo"
+    filterable: true
+    sortable: true
+  priority:
+    type: string
+    nullable: false
+    default: "medium"
+    filterable: true
+    sortable: true
+  estimatedHours:
+    type: float
+    nullable: true
+  dueDate:
+    type: date
+    nullable: true
+    sortable: true
+  projectId:
+    type: foreignId
+    foreign_model: Project
+  assignedTo:
+    type: foreignId
+    foreign_model: User
+    nullable: true
+
+relationships:
+  - type: belongsTo
+    model: Project
+  - type: belongsTo
+    model: User
+    foreign_key: assignedTo
+  - type: hasMany
+    model: Comment
+
+permissions:
+  owner:
+    actions: [index, show, store, update, destroy, trashed, restore, forceDelete]
+    show_fields: "*"
+    create_fields: &owner_task_writable
+      - title
+      - description
+      - status
+      - priority
+      - estimatedHours
+      - dueDate
+      - projectId
+      - assignedTo
+    update_fields: *owner_task_writable
+
+  admin:
+    actions: [index, show, store, update, destroy, trashed, restore]
+    show_fields: "*"
+    create_fields: *owner_task_writable
+    update_fields: *owner_task_writable
+
+  manager:
+    actions: [index, show, store, update]
+    show_fields: "*"
+    create_fields: *owner_task_writable
+    update_fields: *owner_task_writable
+
+  member:
+    actions: [index, show, update]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - priority
+      - dueDate
+      - projectId
+      - assignedTo
+    create_fields: []
+    update_fields:
+      - status
+      - description
+    hidden_fields:
+      - estimatedHours
+
+  viewer:
+    actions: [index, show]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - priority
+      - dueDate
+      - projectId
+      - assignedTo
+    create_fields: []
+    update_fields: []
+    hidden_fields:
+      - estimatedHours

@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  laravel:
+    name: Laravel Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3
+          coverage: none
+
+      - name: Install dependencies
+        working-directory: server-laravel
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Generate app key
+        working-directory: server-laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run migrations and seed
+        working-directory: server-laravel
+        run: php artisan migrate:fresh --seed
+
+      - name: Run tests
+        working-directory: server-laravel
+        run: php artisan test
+
+  rails:
+    name: Rails Tests
+    runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+
+      - name: Install dependencies
+        working-directory: server-rails
+        run: bundle install
+
+      - name: Setup database
+        working-directory: server-rails
+        run: |
+          RAILS_ENV=test bundle exec rails db:create
+          RAILS_ENV=test bundle exec rails db:migrate
+
+      - name: Run tests
+        working-directory: server-rails
+        run: RAILS_ENV=test bundle exec rspec
+
+  nestjs:
+    name: NestJS Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: server-nestjs
+        run: npm install
+
+      - name: Setup environment
+        working-directory: server-nestjs
+        run: cp .env.example .env
+
+      - name: Prepare database and seed
+        working-directory: server-nestjs
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+          npm run db:seed
+
+      - name: Verify API
+        working-directory: server-nestjs
+        run: |
+          npm run start:dev &
+          # Wait for server to accept requests (no root route, so probe the login endpoint)
+          for i in $(seq 1 20); do
+            curl -s -o /dev/null -X POST http://localhost:8004/api/auth/login \
+              -H "Content-Type: application/json" -d '{}' && break
+            echo "Waiting for server... ($i)"
+            sleep 2
+          done
+
+          # Login (NestJS seed uses password123 and org slug "acme")
+          TOKEN=$(curl -sf -X POST http://localhost:8004/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"alice@acme.com","password":"password123"}' | jq -r '.token')
+
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "FAIL: Login failed"
+            exit 1
+          fi
+          echo "PASS: Login works"
+
+          # List projects
+          PROJECTS=$(curl -sf http://localhost:8004/api/acme/projects \
+            -H "Authorization: Bearer $TOKEN" | jq '.data | length')
+          if [ "$PROJECTS" -lt 1 ]; then
+            echo "FAIL: No projects returned"
+            exit 1
+          fi
+          echo "PASS: Projects list returns $PROJECTS projects"
+
+          # Viewer blocked from create
+          VIEWER_TOKEN=$(curl -sf -X POST http://localhost:8004/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"dave@acme.com","password":"password123"}' | jq -r '.token')
+
+          STATUS=$(curl -so /dev/null -w "%{http_code}" -X POST http://localhost:8004/api/acme/projects \
+            -H "Authorization: Bearer $VIEWER_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"title":"Should Fail","status":"active"}')
+          if [ "$STATUS" != "403" ]; then
+            echo "FAIL: Viewer should get 403, got $STATUS"
+            exit 1
+          fi
+          echo "PASS: Viewer blocked from create (403)"
+
+          # Cross-org isolation
+          GLOBEX_TOKEN=$(curl -sf -X POST http://localhost:8004/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"eve@globex.com","password":"password123"}' | jq -r '.token')
+
+          STATUS=$(curl -so /dev/null -w "%{http_code}" http://localhost:8004/api/acme/projects \
+            -H "Authorization: Bearer $GLOBEX_TOKEN")
+          if [ "$STATUS" != "404" ] && [ "$STATUS" != "403" ]; then
+            echo "FAIL: Cross-org should get 404, got $STATUS"
+            exit 1
+          fi
+          echo "PASS: Cross-org isolation ($STATUS)"
+
+          # Hidden columns (member)
+          MEMBER_TOKEN=$(curl -sf -X POST http://localhost:8004/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"carol@acme.com","password":"password123"}' | jq -r '.token')
+
+          HAS_BUDGET=$(curl -sf http://localhost:8004/api/acme/projects \
+            -H "Authorization: Bearer $MEMBER_TOKEN" | jq '.data[0] | has("budget")')
+          if [ "$HAS_BUDGET" = "true" ]; then
+            echo "FAIL: Member should not see budget"
+            exit 1
+          fi
+          echo "PASS: Hidden columns work (member can't see budget)"
+
+          echo ""
+          echo "All NestJS acceptance tests passed!"

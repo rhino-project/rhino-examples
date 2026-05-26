@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+
+# Dependencies (also covered per-app)
+node_modules/
+vendor/
+
+# Builds
+dist/
+build/
+.next/
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Env
+.env

@@ -1,0 +1,53 @@
+model: Label
+table: labels
+
+options:
+  belongs_to_organization: true
+  soft_deletes: true
+  audit_trail: false
+
+columns:
+  name:
+    type: string
+    nullable: false
+    filterable: true
+    sortable: true
+    searchable: true
+  color:
+    type: string
+    nullable: true
+
+relationships: []
+
+permissions:
+  owner:
+    actions: [index, show, store, update, destroy, trashed, restore, forceDelete]
+    show_fields: "*"
+    create_fields: &label_writable
+      - name
+      - color
+    update_fields: *label_writable
+
+  admin:
+    actions: [index, show, store, update, destroy, trashed, restore]
+    show_fields: "*"
+    create_fields: *label_writable
+    update_fields: *label_writable
+
+  manager:
+    actions: [index, show, store, update]
+    show_fields: "*"
+    create_fields: *label_writable
+    update_fields: *label_writable
+
+  member:
+    actions: [index, show]
+    show_fields: "*"
+    create_fields: []
+    update_fields: []
+
+  viewer:
+    actions: [index, show]
+    show_fields: "*"
+    create_fields: []
+    update_fields: []
