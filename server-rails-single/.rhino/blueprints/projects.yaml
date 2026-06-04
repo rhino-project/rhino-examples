@@ -1,0 +1,114 @@
+model: Project
+table: projects
+
+options:
+  belongs_to_organization: true
+  soft_deletes: true
+  audit_trail: false
+
+columns:
+  title:
+    type: string
+    nullable: false
+    filterable: true
+    sortable: true
+    searchable: true
+  description:
+    type: text
+    nullable: true
+  status:
+    type: string
+    nullable: false
+    default: "draft"
+    filterable: true
+    sortable: true
+  budget:
+    type: decimal
+    precision: 12
+    scale: 2
+    nullable: true
+  internal_notes:
+    type: text
+    nullable: true
+  starts_at:
+    type: date
+    nullable: true
+    sortable: true
+  ends_at:
+    type: date
+    nullable: true
+    sortable: true
+
+relationships:
+  - type: hasMany
+    model: Task
+
+permissions:
+  owner:
+    actions: [index, show, store, update, destroy, trashed, restore, forceDelete]
+    show_fields: "*"
+    create_fields: &owner_writable
+      - title
+      - description
+      - status
+      - budget
+      - internal_notes
+      - starts_at
+      - ends_at
+    update_fields: *owner_writable
+
+  admin:
+    actions: [index, show, store, update, destroy, trashed, restore]
+    show_fields: "*"
+    create_fields: *owner_writable
+    update_fields: *owner_writable
+
+  manager:
+    actions: [index, show, store, update]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - budget
+      - starts_at
+      - ends_at
+    create_fields: &manager_writable
+      - title
+      - description
+      - status
+      - starts_at
+      - ends_at
+    update_fields: *manager_writable
+    hidden_fields:
+      - internal_notes
+
+  member:
+    actions: [index, show]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - starts_at
+      - ends_at
+    create_fields: []
+    update_fields: []
+    hidden_fields:
+      - budget
+      - internal_notes
+
+  viewer:
+    actions: [index, show]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - starts_at
+      - ends_at
+    create_fields: []
+    update_fields: []
+    hidden_fields:
+      - budget
+      - internal_notes

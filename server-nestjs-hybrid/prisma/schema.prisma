@@ -1,0 +1,229 @@
+// TaskFlow — Rhino NestJS reference implementation
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Tenancy + auth
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userRoles   UserRole[]
+  projects    Project[]
+  labels      Label[]
+  invitations OrganizationInvitation[]
+  auditLogs   AuditLog[]
+
+  @@map("organizations")
+}
+
+model Role {
+  id          Int                      @id @default(autoincrement())
+  slug        String                   @unique
+  name        String
+  userRoles   UserRole[]
+  invitations OrganizationInvitation[]
+
+  @@map("roles")
+}
+
+model User {
+  id                   Int      @id @default(autoincrement())
+  email                String   @unique
+  name                 String
+  password             String
+  rememberToken        String?
+  hasTemporaryPassword Boolean?
+  emailVerifiedAt      DateTime?
+  permissions          String?  // JSON array for non-tenant permissions
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  userRoles        UserRole[]
+  projects         Project[]                @relation("ProjectOwner")
+  assignedTasks    Task[]                   @relation("TaskAssignee")
+  authoredComments Comment[]                @relation("CommentAuthor")
+  auditLogs        AuditLog[]
+  sentInvitations  OrganizationInvitation[] @relation("InvitedBy")
+
+  @@map("users")
+}
+
+model UserRole {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  // Group-auth schema (GROUP_AUTH_DESIGN §3): nullable org for non-tenant groups
+  // (e.g. `personal`); routeGroup scopes the membership to a group. With
+  // enforceGroupMembership ON, the user must hold a row matching the request's
+  // route group (NULL = wildcard) and — for tenant groups — the resolved org.
+  organizationId Int?
+  roleId         Int
+  routeGroup     String?
+  permissions    String
+  createdAt      DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role          @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, organizationId, roleId, routeGroup])
+  @@map("user_roles")
+}
+
+model PasswordResetToken {
+  email     String   @id
+  token     String
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+model OrganizationInvitation {
+  id             Int       @id @default(autoincrement())
+  organizationId Int
+  email          String
+  roleId         Int
+  token          String    @unique
+  status         String    @default("pending")
+  invitedById    Int
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id])
+  invitedBy    User         @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@map("organization_invitations")
+}
+
+// ---------------------------------------------------------------------------
+// Audit trail
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id             Int      @id @default(autoincrement())
+  auditableType  String
+  auditableId    String
+  action         String
+  oldValues      String?
+  newValues      String?
+  userId         Int?
+  organizationId Int?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([auditableType, auditableId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// TaskFlow domain (hand-authored — the blueprint PrismaSchemaGenerator cannot
+// produce production-quality Prisma models today; tracked as task BP-002)
+// ---------------------------------------------------------------------------
+
+model Project {
+  id             Int       @id @default(autoincrement())
+  // Hybrid: a Project is org-owned in the agency/vendor groups (organizationId)
+  // OR user-owned in the personal group (userId). Exactly one is set depending
+  // on which route group created it. Both nullable to support both shapes.
+  organizationId Int?
+  userId         Int?
+  title          String
+  description    String?
+  status         String    @default("draft")
+  budget         Float?
+  internalNotes  String?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation("ProjectOwner", fields: [userId], references: [id], onDelete: Cascade)
+  tasks        Task[]
+
+  @@map("projects")
+}
+
+model Task {
+  id             Int       @id @default(autoincrement())
+  projectId      Int
+  assignedTo     Int?
+  title          String
+  description    String?
+  status         String    @default("todo")
+  priority       String    @default("medium")
+  estimatedHours Float?
+  dueDate        DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  project  Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?       @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  comments Comment[]
+  labels   TaskLabel[]
+
+  @@map("tasks")
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  taskId    Int
+  userId    Int
+  body      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation("CommentAuthor", fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Label {
+  id             Int       @id @default(autoincrement())
+  organizationId Int
+  name           String
+  color          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tasks        TaskLabel[]
+
+  @@map("labels")
+}
+
+model TaskLabel {
+  taskId    Int
+  labelId   Int
+  createdAt DateTime @default(now())
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@map("task_labels")
+}

@@ -1,0 +1,16 @@
+roles:
+  owner:
+    name: Owner
+    description: "Full access to everything. Manages billing and users."
+  admin:
+    name: Admin
+    description: "Operational admin. Full CRUD on all resources."
+  manager:
+    name: Manager
+    description: "Can manage projects and tasks, limited field access."
+  member:
+    name: Member
+    description: "Can view and work on assigned tasks."
+  viewer:
+    name: Viewer
+    description: "Read-only access to projects and tasks."

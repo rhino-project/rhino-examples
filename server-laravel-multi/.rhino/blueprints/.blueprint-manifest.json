@@ -1,0 +1,54 @@
+{
+    "version": 1,
+    "generated_at": "2026-04-12T05:40:33+00:00",
+    "files": {
+        "comments.yaml": {
+            "content_hash": "b10ee54ebbfce64fdd1817cc85c9b75578e500391e38a19cb0359ca0630efdcf",
+            "generated_files": [
+                "app/Models/Comment.php",
+                "database/migrations/2026_04_12_054034_create_comments_table.php",
+                "database/factories/CommentFactory.php",
+                "app/Models/Scopes/CommentScope.php",
+                "app/Policies/CommentPolicy.php",
+                "tests/Model/CommentTest.php"
+            ],
+            "generated_at": "2026-04-12T05:40:33+00:00"
+        },
+        "labels.yaml": {
+            "content_hash": "16e7927d2fbe6611ff62e9fea78b2079ca17f3c97f88f7bc4e0ad7212d610a44",
+            "generated_files": [
+                "app/Models/Label.php",
+                "database/migrations/2026_04_12_054036_create_labels_table.php",
+                "database/factories/LabelFactory.php",
+                "app/Models/Scopes/LabelScope.php",
+                "app/Policies/LabelPolicy.php",
+                "tests/Model/LabelTest.php"
+            ],
+            "generated_at": "2026-04-12T05:40:33+00:00"
+        },
+        "projects.yaml": {
+            "content_hash": "76422ba31e1576e5cbf0c3f7fe98223054e4f5e98a295e5a0d8a0fc9d665f775",
+            "generated_files": [
+                "app/Models/Project.php",
+                "database/migrations/2026_04_12_054038_create_projects_table.php",
+                "database/factories/ProjectFactory.php",
+                "app/Models/Scopes/ProjectScope.php",
+                "app/Policies/ProjectPolicy.php",
+                "tests/Model/ProjectTest.php"
+            ],
+            "generated_at": "2026-04-12T05:40:33+00:00"
+        },
+        "tasks.yaml": {
+            "content_hash": "e1a0c0721e3626349348a4964c5e56d6ad52dd94fe2974b9df726ce74c4db1eb",
+            "generated_files": [
+                "app/Models/Task.php",
+                "database/migrations/2026_04_12_054040_create_tasks_table.php",
+                "database/factories/TaskFactory.php",
+                "app/Models/Scopes/TaskScope.php",
+                "app/Policies/TaskPolicy.php",
+                "tests/Model/TaskTest.php"
+            ],
+            "generated_at": "2026-04-12T05:40:33+00:00"
+        }
+    }
+}

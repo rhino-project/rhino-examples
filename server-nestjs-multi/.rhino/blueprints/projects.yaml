@@ -1,0 +1,112 @@
+model: Project
+table: projects
+
+options:
+  belongs_to_organization: true
+  soft_deletes: true
+  audit_trail: true
+
+columns:
+  title:
+    type: string
+    nullable: false
+    filterable: true
+    sortable: true
+    searchable: true
+  description:
+    type: text
+    nullable: true
+  status:
+    type: string
+    nullable: false
+    default: "draft"
+    filterable: true
+    sortable: true
+  budget:
+    type: float
+    nullable: true
+  internalNotes:
+    type: text
+    nullable: true
+  startsAt:
+    type: date
+    nullable: true
+    sortable: true
+  endsAt:
+    type: date
+    nullable: true
+    sortable: true
+
+relationships:
+  - type: hasMany
+    model: Task
+
+permissions:
+  owner:
+    actions: [index, show, store, update, destroy, trashed, restore, forceDelete]
+    show_fields: "*"
+    create_fields: &owner_writable
+      - title
+      - description
+      - status
+      - budget
+      - internalNotes
+      - startsAt
+      - endsAt
+    update_fields: *owner_writable
+
+  admin:
+    actions: [index, show, store, update, destroy, trashed, restore]
+    show_fields: "*"
+    create_fields: *owner_writable
+    update_fields: *owner_writable
+
+  manager:
+    actions: [index, show, store, update]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - budget
+      - startsAt
+      - endsAt
+    create_fields: &manager_writable
+      - title
+      - description
+      - status
+      - startsAt
+      - endsAt
+    update_fields: *manager_writable
+    hidden_fields:
+      - internalNotes
+
+  member:
+    actions: [index, show]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - startsAt
+      - endsAt
+    create_fields: []
+    update_fields: []
+    hidden_fields:
+      - budget
+      - internalNotes
+
+  viewer:
+    actions: [index, show]
+    show_fields:
+      - id
+      - title
+      - description
+      - status
+      - startsAt
+      - endsAt
+    create_fields: []
+    update_fields: []
+    hidden_fields:
+      - budget
+      - internalNotes

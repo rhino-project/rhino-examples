@@ -1,0 +1,155 @@
+// TaskFlow — Rhino NestJS reference implementation (SINGLE-TENANT variant)
+//
+// No Organization / Role / UserRole models at all. Domain models are owned by
+// `userId`: Project carries userId directly; Task/Comment inherit ownership via
+// their parent Project. Label is a SHARED GLOBAL catalog (not user-owned).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth (no tenancy — plain users)
+// ---------------------------------------------------------------------------
+
+model User {
+  id                   Int       @id @default(autoincrement())
+  email                String    @unique
+  name                 String
+  password             String
+  rememberToken        String?
+  hasTemporaryPassword Boolean?
+  emailVerifiedAt      DateTime?
+  permissions          String? // JSON array of global permissions
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  projects         Project[] @relation("ProjectOwner")
+  assignedTasks    Task[]    @relation("TaskAssignee")
+  authoredComments Comment[] @relation("CommentAuthor")
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model PasswordResetToken {
+  email     String   @id
+  token     String
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Audit trail
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  auditableType String
+  auditableId   String
+  action        String
+  oldValues     String?
+  newValues     String?
+  userId        Int?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([auditableType, auditableId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// TaskFlow domain — user-owned
+// ---------------------------------------------------------------------------
+
+model Project {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  title         String
+  description   String?
+  status        String    @default("draft")
+  budget        Float?
+  internalNotes String?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  user  User   @relation("ProjectOwner", fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("projects")
+}
+
+model Task {
+  id             Int       @id @default(autoincrement())
+  projectId      Int
+  assignedTo     Int?
+  title          String
+  description    String?
+  status         String    @default("todo")
+  priority       String    @default("medium")
+  estimatedHours Float?
+  dueDate        DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  project  Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?       @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  comments Comment[]
+  labels   TaskLabel[]
+
+  @@map("tasks")
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  taskId    Int
+  userId    Int
+  body      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation("CommentAuthor", fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+// Label is a SHARED GLOBAL catalog — NOT user-owned. Every user sees all labels.
+model Label {
+  id        Int         @id @default(autoincrement())
+  name      String
+  color     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
+  tasks     TaskLabel[]
+
+  @@map("labels")
+}
+
+model TaskLabel {
+  taskId    Int
+  labelId   Int
+  createdAt DateTime @default(now())
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@map("task_labels")
+}

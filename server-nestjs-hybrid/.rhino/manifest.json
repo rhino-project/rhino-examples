@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "generated_at": "2026-04-15T22:59:11.324Z",
+  "files": {
+    "comments.yaml": {
+      "content_hash": "9393b4dd6397569d221e97524f8b2da4283b85270f493f0ca01ed96c76d5a69e",
+      "generated_files": [
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/resources/CommentResource.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/policies/CommentPolicy.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/test/generated/Comment.spec.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/seeders/CommentSeeder.ts"
+      ],
+      "generated_at": "2026-04-15T22:59:11.319Z"
+    },
+    "labels.yaml": {
+      "content_hash": "bedff8bd36caa770efa070b18d50e17147dd09d938b0bb9d90d44cddd732341b",
+      "generated_files": [
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/resources/LabelResource.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/policies/LabelPolicy.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/test/generated/Label.spec.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/seeders/LabelSeeder.ts"
+      ],
+      "generated_at": "2026-04-15T22:59:11.321Z"
+    },
+    "projects.yaml": {
+      "content_hash": "f1d4d107bc14f9ad3ae2b2e945699fdfe9c799d114eac2c60e21941de92bdda8",
+      "generated_files": [
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/resources/ProjectResource.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/policies/ProjectPolicy.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/test/generated/Project.spec.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/seeders/ProjectSeeder.ts"
+      ],
+      "generated_at": "2026-04-15T22:59:11.322Z"
+    },
+    "tasks.yaml": {
+      "content_hash": "dd33b4031f204d9c65e25a1e39c6e4b90b3f14232aa81965fb47c28c13df09cd",
+      "generated_files": [
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/resources/TaskResource.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/policies/TaskPolicy.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/test/generated/Task.spec.ts",
+        "/Users/brunocipolla/Documents/GitHub/rhino-project/rhino-laravel-template/server-nestjs/src/seeders/TaskSeeder.ts"
+      ],
+      "generated_at": "2026-04-15T22:59:11.324Z"
+    }
+  }
+}

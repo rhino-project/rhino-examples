@@ -1,0 +1,61 @@
+model: Comment
+table: comments
+
+options:
+  belongs_to_organization: false
+  soft_deletes: true
+  audit_trail: false
+
+columns:
+  body:
+    type: text
+    nullable: false
+  task_id:
+    type: foreignId
+    foreign_model: Task
+  user_id:
+    type: foreignId
+    foreign_model: User
+
+relationships:
+  - type: belongsTo
+    model: Task
+  - type: belongsTo
+    model: User
+
+permissions:
+  owner:
+    actions: [index, show, store, update, destroy, trashed, restore, forceDelete]
+    show_fields: "*"
+    create_fields: &comment_writable
+      - body
+      - task_id
+    update_fields:
+      - body
+
+  admin:
+    actions: [index, show, store, update, destroy, trashed, restore]
+    show_fields: "*"
+    create_fields: *comment_writable
+    update_fields:
+      - body
+
+  manager:
+    actions: [index, show, store, update, destroy]
+    show_fields: "*"
+    create_fields: *comment_writable
+    update_fields:
+      - body
+
+  member:
+    actions: [index, show, store, update]
+    show_fields: "*"
+    create_fields: *comment_writable
+    update_fields:
+      - body
+
+  viewer:
+    actions: [index, show]
+    show_fields: "*"
+    create_fields: []
+    update_fields: []
