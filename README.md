@@ -38,6 +38,52 @@ All five apps share the same product spec — see [`PRD.md`](./PRD.md) for the 2
 
 ---
 
+## Configuration variants
+
+> ⚠️ These live on the **`examples/config-variants`** branch only, and they wire to the **local dev libraries** (the sibling `rhino-*` repos, via Composer `path` / npm `file:` / Bundler `path:`). They run alongside a local checkout of the libs — which is why they're kept off `main`.
+
+The base `server-laravel` / `server-rails` / `server-nestjs` above show **one** multi-tenancy shape: the classic path-prefix tenant (`/api/{org}/...`). Real apps come in more shapes, and Rhino expresses them with route-group **config**, not controllers. These variants build the **same TaskFlow domain** three different ways, in **all three backends**, so you can see and test each end to end:
+
+| Variant | Tenancy model | What it demonstrates | Ports (LV / RB / Nest) |
+|---|---|---|---|
+| `*-single` | **Single-tenant, no org** | No `Organization`/`Role`/`UserRole` at all — every record is owned by its `user_id`; shared reference tables (labels) stay global. | 8000 / 3000 / 8004 |
+| `*-multi` | **Multitenant-only** | One `tenant` group, `/api/{org}/...`, org-scoped data — the base app's config, on dev libs. | 8001 / 3001 / 8005 |
+| `*-hybrid` | **Hybrid (multiple groups)** | Three route groups in one app: a user-owned `personal` group **plus** two org-scoped client types (`agency`, `vendor`) on **separate subdomains**, each with its **own sign-in** + group-membership enforcement. | 8002 / 3002 / 8006 |
+
+### Why they exist
+
+- **Show the range of Rhino multi-tenancy** — single-tenant, multitenant, and hybrid multi-group — as a config change over one codebase, not a rewrite.
+- **Exercise the newer library features** end to end: per-group `domain` route groups (subdomains), group-aware auth (a separate sign-in per group), `user_roles` group membership + enforcement, and auth lifecycle hooks.
+
+### Multi-face clients
+
+`client-web-hybrid` and `client-mobile-hybrid` are the hybrid app's front ends. The **first screen is a group picker** (personal / agency / vendor) — one app presenting multiple "faces." All per-group differences live in a single `src/groups/registry.ts`, so adding/removing a face is a one-file change.
+
+### Running a hybrid app + testing subdomains locally
+
+Subdomain route groups need host-based routing. Use **`lvh.me`** (and any subdomain of it) — it resolves to `127.0.0.1` with no `/etc/hosts` edits and works with ports:
+
+```bash
+cd server-laravel-hybrid && php artisan serve --host=0.0.0.0 --port=8002
+#   personal -> http://app.lvh.me:8002
+#   agency   -> http://acme.agency.lvh.me:8002      (domain {organization}.agency.lvh.me)
+#   vendor   -> http://globex.vendor.lvh.me:8002    (domain {organization}.vendor.lvh.me)
+```
+
+For scripted/offline checks (no DNS), send the `Host` header directly:
+
+```bash
+curl -H 'Host: acme.agency.lvh.me' http://127.0.0.1:8002/api/...
+```
+
+(Rails dev also needs `config.hosts << /.*\.lvh\.me/`. On a **physical mobile device** `lvh.me` won't resolve, so `client-mobile-hybrid` targets the dev machine's IP and sets a per-face `Host` header instead — see its README.)
+
+### Base vs. variants
+
+The base apps install the libraries **from the registry** — the "production-style" reference this README documents. The variants wire to the **local dev** libraries so you can test unreleased features. The base and `*-multi` therefore overlap **by design**: same config, different lib source.
+
+---
+
 ## Architecture
 
 ```
