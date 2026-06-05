@@ -2,22 +2,21 @@ import { useState, type FormEvent } from 'react';
 import { useAuth, setOrganization } from '@rhino-dev/rhino-react';
 import { Icon } from '../components/Icons';
 import { useToast } from '../components/Toaster';
-import { detectGroup, SEEDED_CREDENTIALS } from '../lib/group';
+import { useActiveGroup, useGroup } from '../groups/GroupContext';
 
-// Group-aware sign-in. The group + org are derived from the browser host (the
-// subdomain), shown in a banner, and the matching seeded credentials are
-// pre-filled. login() posts to /api/auth/login; the forwarded Host makes the
-// backend resolve the correct per-group auth route. A wrong-group / non-member
-// login returns 403 (enforce_group_membership = ON) which we surface as an
-// explicit "you're not a member of the {group} group" message — the headline demo.
+// Generic, face-agnostic sign-in. The active face comes from GroupContext (set
+// by the GroupSelect entry screen). Its X-Rhino-Host header is already wired, so
+// login() posts to /api/auth/login and the forwarded Host makes Laravel resolve
+// the correct per-group auth route. A wrong-group / non-member login returns 403
+// (enforce_group_membership = ON), surfaced as "not a member of the {label}".
 export function LoginPage() {
   const { login } = useAuth();
+  const { clearGroup } = useGroup();
   const toast = useToast();
-  const detected = detectGroup();
-  const seeded = SEEDED_CREDENTIALS[detected.group];
+  const { face, org, host } = useActiveGroup();
 
-  const [email, setEmail] = useState(seeded.email);
-  const [password, setPassword] = useState(seeded.password);
+  const [email, setEmail] = useState(face.demo.email);
+  const [password, setPassword] = useState(face.demo.password);
   const [busy, setBusy] = useState(false);
   const [denied, setDenied] = useState<string | null>(null);
 
@@ -31,8 +30,9 @@ export function LoginPage() {
     if (!result.success) {
       // The lib's login() maps any failure (including the membership 403) to
       // { success:false, error }. Make the cross-group denial explicit.
-      const msg = `You're not a member of the ${detected.group} group` +
-        (detected.org ? ` for "${detected.org}".` : '.') +
+      const msg =
+        `You're not a member of the ${face.label}` +
+        (org ? ` for "${org}".` : '.') +
         ' (membership enforcement is ON for this backend.)';
       setDenied(msg);
       toast(msg, 'error');
@@ -42,12 +42,11 @@ export function LoginPage() {
     toast(`Welcome, ${result.user?.name ?? email}`, 'ok');
     if (result.user?.name) localStorage.setItem('rhino_user_name', result.user.name);
     if (result.user?.email) localStorage.setItem('rhino_user_email', result.user.email);
-    // With tenancy:'subdomain' the org is carried by the request HOST, so it is
-    // NEVER placed in the URL path. But the stock data hooks stay disabled until
-    // an org slug is present in context (enabled: !!organization), so we set one
-    // to unlock the query: the subdomain org for agency/vendor, or the group name
-    // as an org-less sentinel for personal. It gates the hook; it is not routed.
-    setOrganization(detected.org ?? detected.group);
+    // tenancy:'subdomain' → the org is carried by the Host, never the URL path.
+    // The stock data hooks stay disabled until an org slug is present in context
+    // (enabled: !!organization), so set one to unlock the query: the subdomain
+    // org for tenant faces, or the face key as an org-less sentinel for personal.
+    setOrganization(org ?? face.key);
   }
 
   return (
@@ -55,15 +54,28 @@ export function LoginPage() {
       <div className="login-card">
         <div className="login-brand">
           <div className="brand-mark">R</div>
-          <div className="brand-name">TaskFlow <span>/hybrid</span></div>
+          <div className="brand-name">
+            TaskFlow <span>/hybrid</span>
+          </div>
         </div>
 
-        <div className={`group-banner group-${detected.group}`}>
+        <div
+          className={`group-banner group-${face.key}`}
+          style={{ borderLeftColor: face.accent }}
+        >
           <div className="group-banner-line">
-            Signing in to the <b>{detected.label}</b> workspace
-            {detected.org ? <> — org: <b>{detected.org}</b></> : <> — <b>no org</b> (user-owned)</>}
+            Signing in to the <b>{face.label}</b>
+            {org ? (
+              <>
+                {' '}— org: <b>{org}</b>
+              </>
+            ) : (
+              <>
+                {' '}— <b>no org</b> (user-owned)
+              </>
+            )}
           </div>
-          <div className="group-banner-host">{window.location.host}</div>
+          <div className="group-banner-host">{host}</div>
         </div>
 
         <h1 className="login-title">Sign in</h1>
@@ -80,28 +92,68 @@ export function LoginPage() {
         <form className="form" onSubmit={handleSubmit}>
           <div className="field">
             <label>Email</label>
-            <input className="input" type="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} required />
+            <input
+              className="input"
+              type="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div className="field">
             <label>Password</label>
-            <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
-          <button className="btn btn-primary" type="submit" disabled={busy} style={{ justifyContent: 'center' }}>
-            {busy ? <><span className="spinner" /> Signing in…</> : <><Icon.lock size={14} /> Sign in</>}
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={busy}
+            style={{ justifyContent: 'center' }}
+          >
+            {busy ? (
+              <>
+                <span className="spinner" /> Signing in…
+              </>
+            ) : (
+              <>
+                <Icon.lock size={14} /> Sign in
+              </>
+            )}
           </button>
         </form>
 
         <div className="login-hint">
-          <b># This group's seeded account</b>
-          <div style={{ marginTop: 4, cursor: 'pointer' }}
-               onClick={() => { setEmail(seeded.email); setPassword(seeded.password); }}>
-            {seeded.email} · {seeded.password} <span className="faint">→ {detected.group}</span>
+          <b># This face's seeded account</b>
+          <div
+            style={{ marginTop: 4, cursor: 'pointer' }}
+            onClick={() => {
+              setEmail(face.demo.email);
+              setPassword(face.demo.password);
+            }}
+          >
+            {face.demo.email} · {face.demo.password}{' '}
+            <span className="faint">→ {face.key}</span>
           </div>
           <div className="faint" style={{ marginTop: 8 }}>
-            Try the cross-group 403: open this on a different group's subdomain and
-            sign in with this account — membership enforcement denies it.
+            Try the cross-group 403: switch to a different group and sign in with
+            this account — membership enforcement denies it.
           </div>
         </div>
+
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}
+          onClick={clearGroup}
+        >
+          <Icon.arrowL size={14} /> Switch group
+        </button>
       </div>
     </div>
   );
