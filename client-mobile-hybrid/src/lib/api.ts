@@ -51,29 +51,20 @@ export function resolveBaseURL(): string {
 
 let configured = false;
 
-// The lib's `login()` swallows the HTTP error and only returns a message string,
-// so we can't read the status from the result. Instead we register an
-// `onForbidden` handler that records the moment a 403 was seen; the Login screen
-// reads `wasRecentlyForbidden()` to know a membership denial (not a bad password)
-// just happened. 403 means: authenticated, but not a member of THIS group.
-let lastForbiddenAt = 0;
-
-/** True if a 403 (group-membership denial) was seen within the last `withinMs`. */
-export function wasRecentlyForbidden(withinMs = 3000): boolean {
-  return Date.now() - lastForbiddenAt < withinMs;
-}
-
 /**
  * Configure rhino-react's API client once. Sets the dev-machine baseURL and
  * subdomain tenancy. The per-group Host header is applied separately by
  * `setApiHost` whenever the active face changes.
+ *
+ * A 403 on login (authenticated, but not a member of THIS group) is read
+ * directly from `login().status` by the Login screen — no onForbidden
+ * side-channel needed.
  */
 export function ensureApiConfigured(): void {
   if (configured) return;
   configureApi({
     baseURL: resolveBaseURL(),
     tenancy: 'subdomain',
-    onForbidden: () => { lastForbiddenAt = Date.now(); },
   });
   if (__DEV__) console.log('[Rhino API] baseURL', resolveBaseURL(), '(tenancy: subdomain)');
   configured = true;

@@ -28,12 +28,14 @@ export function LoginPage() {
     setBusy(false);
 
     if (!result.success) {
-      // The lib's login() maps any failure (including the membership 403) to
-      // { success:false, error }. Make the cross-group denial explicit.
+      // login() now reports the HTTP status. A 403 is the membership denial
+      // (enforce_group_membership = ON); anything else is a generic auth failure.
       const msg =
-        `You're not a member of the ${face.label}` +
-        (org ? ` for "${org}".` : '.') +
-        ' (membership enforcement is ON for this backend.)';
+        result.status === 403
+          ? `You're not a member of the ${face.label}` +
+            (org ? ` for "${org}".` : '.') +
+            ' (membership enforcement is ON for this backend.)'
+          : result.error ?? 'Sign-in failed. Check your credentials and try again.';
       setDenied(msg);
       toast(msg, 'error');
       return;
@@ -43,10 +45,9 @@ export function LoginPage() {
     if (result.user?.name) localStorage.setItem('rhino_user_name', result.user.name);
     if (result.user?.email) localStorage.setItem('rhino_user_email', result.user.email);
     // tenancy:'subdomain' → the org is carried by the Host, never the URL path.
-    // The stock data hooks stay disabled until an org slug is present in context
-    // (enabled: !!organization), so set one to unlock the query: the subdomain
-    // org for tenant faces, or the face key as an org-less sentinel for personal.
-    setOrganization(org ?? face.key);
+    // The stock data hooks now run with NO org in subdomain mode, so set the org
+    // only for tenant faces; the personal (org-less) face needs no placeholder.
+    if (org) setOrganization(org);
   }
 
   return (
@@ -85,7 +86,7 @@ export function LoginPage() {
 
         {denied && (
           <div className="alert alert-error" role="alert">
-            <b>403 — Access denied.</b> {denied}
+            <b>Access denied.</b> {denied}
           </div>
         )}
 

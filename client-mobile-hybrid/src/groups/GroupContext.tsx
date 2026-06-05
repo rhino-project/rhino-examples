@@ -34,17 +34,16 @@ interface GroupContextValue {
 const GroupContext = createContext<GroupContextValue | null>(null);
 
 /**
- * Apply a face to the API layer: set the resolved Host header and the org slug
- * the data hooks gate on (`useModelIndex` is `enabled: !!organization`, even in
- * subdomain mode where the org is NOT placed in the URL). The personal face is
- * org-less on the backend, so we use its key as a non-empty placeholder slug
- * purely to enable the hooks; it never reaches the wire.
+ * Apply a face to the API layer: set the resolved Host header and (for tenant
+ * faces) the org slug. In subdomain mode the data hooks run with NO org in
+ * context, so the personal (org-less) face needs no placeholder slug — we set
+ * the org only for tenant faces, where it travels via the Host, not the URL.
  */
-function applyFaceToApi(face: GroupFace, org?: string): { host: string; org: string } {
+function applyFaceToApi(face: GroupFace, org?: string): { host: string; org?: string } {
   const host = resolveHost(face, org);
-  const orgSlug = face.tenant ? (org ?? face.demo.org!) : face.key;
+  const orgSlug = face.tenant ? (org ?? face.demo.org!) : undefined;
   setApiHost(host);
-  setOrganization(orgSlug);
+  setOrganization(orgSlug ?? null);
   return { host, org: orgSlug };
 }
 

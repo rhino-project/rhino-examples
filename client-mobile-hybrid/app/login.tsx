@@ -10,7 +10,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useToast } from '../components/Toaster';
 import { useGroup } from '../src/groups/GroupContext';
-import { wasRecentlyForbidden } from '../src/lib/api';
 import { colors, radii } from '../theme';
 
 export default function LoginScreen() {
@@ -34,9 +33,9 @@ export default function LoginScreen() {
         toast(`Welcome to ${face!.label}`, 'ok');
         return; // gate routes to /workspace
       }
-      // A 403 from group-membership enforcement is captured by the API layer's
-      // onForbidden handler. Show a face-specific membership message for it.
-      const msg = wasRecentlyForbidden()
+      // login() now reports the HTTP status. A 403 is group-membership
+      // enforcement: authenticated, but not a member of THIS group.
+      const msg = result.status === 403
         ? `You're not a member of the ${face!.label}.`
         : result.error ?? 'Login failed';
       toast(msg, 'error');
