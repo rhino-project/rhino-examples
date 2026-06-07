@@ -50,6 +50,32 @@ The base `server-laravel` / `server-rails` / `server-nestjs` above show **one** 
 | `*-multi` | **Multitenant-only** | One `tenant` group, `/api/{org}/...`, org-scoped data — the base app's config, on dev libs. | 8001 / 3001 / 8005 |
 | `*-hybrid` | **Hybrid (multiple groups)** | Three route groups in one app: a user-owned `personal` group **plus** two org-scoped client types (`agency`, `vendor`) on **separate subdomains**, each with its **own sign-in** + group-membership enforcement. | 8002 / 3002 / 8006 |
 
+### Running the variants — one-time setup
+
+Because the variants wire to the **local dev libraries**, do this once before running any of them:
+
+```bash
+# Build the JS dev libs so the file:/path: consumers can resolve them
+( cd ../rhino-react  && npm install && npm run build )   # required by every web client variant
+( cd ../rhino-nestjs && npm install && npm run build )   # required by every server-nestjs-* variant
+```
+
+Per-stack prerequisites:
+
+- **Laravel** (`server-laravel-*`): needs **PHP ≥ 8.4.1** — the apps are on Laravel 13 / Symfony 8. `composer install && cp .env.example .env && php artisan key:generate && php artisan migrate:fresh --seed`.
+- **Rails** (`server-rails-*`): needs the Ruby in `.ruby-version` (**3.4.7**). `bundle install && bin/rails db:prepare && bin/rails db:seed`.
+- **NestJS** (`server-nestjs-*`): **copy the env file** first — `cp .env.example .env` — then `npx prisma migrate deploy && npm run db:seed`. (`.env` is git-ignored; `.env.example` carries the right `PORT` and `DATABASE_URL`.)
+
+Seeded credentials differ per variant (all passwords `password`, except NestJS which uses `password123`):
+
+| Variant | Sign-in accounts | Org slug(s) |
+|---|---|---|
+| `*-single` | `alice@example.com`, `bob@example.com` | — (no orgs) |
+| `*-multi` | `alice@acme.com` … (`carol`, `dave`) | `acme-corp`, `globex-inc` (NestJS seeds `acme` / `globex`) |
+| `*-hybrid` | `agency@acme.com` (agency), `vendor@globex.com` (vendor), `personal@example.com` (personal; NestJS: `solo@app.com`) | `acme` (agency), `globex` (vendor) |
+
+A ready-made `.vscode/launch.json` (with compound "stack" launchers and the full port map) is included for running servers + clients from the editor.
+
 ### Why they exist
 
 - **Show the range of Rhino multi-tenancy** — single-tenant, multitenant, and hybrid multi-group — as a config change over one codebase, not a rewrite.

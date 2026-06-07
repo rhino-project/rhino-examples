@@ -1,0 +1,198 @@
+{
+  // Run configs for every TaskFlow example (config-variants branch).
+  //
+  // Open the `rhino-examples` folder as the VS Code workspace root so
+  // ${workspaceFolder} resolves to this repo. Each config uses the
+  // `node-terminal` launch type, which just runs the given command in an
+  // integrated terminal — uniform across PHP / Ruby / Node and lets every
+  // app pin its own port.
+  //
+  // Port map (matches README "Configuration variants"):
+  //   Laravel   single 8000   multi 8001   hybrid 8002
+  //   Rails     single 3000   multi 3001   hybrid 3002
+  //   NestJS    single 8004   multi 8005   hybrid 8006   (PORT overridden here;
+  //                                                       all .env ship PORT=8004)
+  //   Web       client-web 5173   -single 5180   -hybrid 5182
+  //   Mobile    Expo (Metro 8081)        Desktop   Electron
+  //
+  // The variants wire to the LOCAL dev libs (../../rhino-*), so keep the sibling
+  // rhino-laravel / rhino-rails / rhino-nestjs / rhino-react repos checked out
+  // on `main` next to this one. Hybrid needs host routing — use *.lvh.me.
+  "version": "0.2.0",
+  "configurations": [
+    // ───────────────────────── Laravel ─────────────────────────
+    {
+      "name": "server-laravel-single (8000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-laravel-single",
+      "command": "php artisan serve --host=0.0.0.0 --port=8000"
+    },
+    {
+      "name": "server-laravel-multi (8001)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-laravel-multi",
+      "command": "php artisan serve --host=0.0.0.0 --port=8001"
+    },
+    {
+      "name": "server-laravel-hybrid (8002)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-laravel-hybrid",
+      "command": "php artisan serve --host=0.0.0.0 --port=8002"
+    },
+    {
+      "name": "server-laravel [base] (8000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-laravel",
+      "command": "php artisan serve --host=0.0.0.0 --port=8000"
+    },
+
+    // ───────────────────────── Rails ─────────────────────────
+    {
+      "name": "server-rails-single (3000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-rails-single",
+      "command": "bin/rails server -b 0.0.0.0 -p 3000"
+    },
+    {
+      "name": "server-rails-multi (3001)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-rails-multi",
+      "command": "bin/rails server -b 0.0.0.0 -p 3001"
+    },
+    {
+      "name": "server-rails-hybrid (3002)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-rails-hybrid",
+      "command": "bin/rails server -b 0.0.0.0 -p 3002"
+    },
+    {
+      "name": "server-rails [base] (3000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-rails",
+      "command": "bin/rails server -b 0.0.0.0 -p 3000"
+    },
+
+    // ───────────────────────── NestJS ─────────────────────────
+    // PORT is overridden because every variant .env ships PORT=8004.
+    {
+      "name": "server-nestjs-single (8004)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-nestjs-single",
+      "command": "PORT=8004 npm run start:dev"
+    },
+    {
+      "name": "server-nestjs-multi (8005)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-nestjs-multi",
+      "command": "PORT=8005 npm run start:dev"
+    },
+    {
+      "name": "server-nestjs-hybrid (8006)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-nestjs-hybrid",
+      "command": "PORT=8006 npm run start:dev"
+    },
+    {
+      "name": "server-nestjs [base] (8004)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server-nestjs",
+      "command": "PORT=8004 npm run start:dev"
+    },
+
+    // ───────────────────────── Web clients ─────────────────────────
+    {
+      "name": "client-web [multi] (5173 → :8001/:8000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client-web",
+      "command": "npm run dev -- --port 5173"
+    },
+    {
+      "name": "client-web-single (5180 → :8000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client-web-single",
+      "command": "npm run dev -- --port 5180"
+    },
+    {
+      "name": "client-web-hybrid (5182 → :8002, *.lvh.me)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client-web-hybrid",
+      "command": "npm run dev -- --port 5182"
+    },
+
+    // ───────────────────────── Mobile / Desktop (run manually) ─────────────────────────
+    {
+      "name": "client-mobile (Expo)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client-mobile",
+      "command": "npx expo start"
+    },
+    {
+      "name": "client-mobile-hybrid (Expo)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client-mobile-hybrid",
+      "command": "npx expo start"
+    },
+    {
+      "name": "client-desktop (Electron)",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/client-desktop",
+      "command": "npm run dev"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "▶ Single stack — Laravel (8000) + web (5180)",
+      "configurations": ["server-laravel-single (8000)", "client-web-single (5180 → :8000)"]
+    },
+    {
+      "name": "▶ Multi stack — Laravel (8001) + web (5173)",
+      "configurations": ["server-laravel-multi (8001)", "client-web [multi] (5173 → :8001/:8000)"]
+    },
+    {
+      "name": "▶ Hybrid stack — Laravel (8002) + web (5182)",
+      "configurations": ["server-laravel-hybrid (8002)", "client-web-hybrid (5182 → :8002, *.lvh.me)"]
+    },
+    {
+      "name": "▶ All Laravel servers (8000/8001/8002)",
+      "configurations": [
+        "server-laravel-single (8000)",
+        "server-laravel-multi (8001)",
+        "server-laravel-hybrid (8002)"
+      ]
+    },
+    {
+      "name": "▶ All Rails servers (3000/3001/3002)",
+      "configurations": [
+        "server-rails-single (3000)",
+        "server-rails-multi (3001)",
+        "server-rails-hybrid (3002)"
+      ]
+    },
+    {
+      "name": "▶ All NestJS servers (8004/8005/8006)",
+      "configurations": [
+        "server-nestjs-single (8004)",
+        "server-nestjs-multi (8005)",
+        "server-nestjs-hybrid (8006)"
+      ]
+    }
+  ]
+}
