@@ -40,7 +40,11 @@ All five apps share the same product spec — see [`PRD.md`](./PRD.md) for the 2
 
 ## Configuration variants
 
-> ⚠️ These live on the **`examples/config-variants`** branch only, and they wire to the **local dev libraries** (the sibling `rhino-*` repos, via Composer `path` / npm `file:` / Bundler `path:`). They run alongside a local checkout of the libs — which is why they're kept off `main`.
+> ⚠️ These live on the **`examples/config-variants`** branch only, and they wire to the **dev libraries**:
+> - **Laravel** (`server-laravel-*`) pulls `rhino-project/rhino-laravel:dev-main` from **Packagist** (the published dev channel — no local checkout needed).
+> - **Rails / NestJS / React** wire to the **local sibling repos** (Bundler `path:` → `../../rhino-rails`, npm `file:` → `../../rhino-nestjs` / `../../rhino-react`), so keep those checked out on `main` next to this repo.
+>
+> They're kept off `main` because they target unreleased dev libraries.
 
 The base `server-laravel` / `server-rails` / `server-nestjs` above show **one** multi-tenancy shape: the classic path-prefix tenant (`/api/{org}/...`). Real apps come in more shapes, and Rhino expresses them with route-group **config**, not controllers. These variants build the **same TaskFlow domain** three different ways, in **all three backends**, so you can see and test each end to end:
 
@@ -52,10 +56,10 @@ The base `server-laravel` / `server-rails` / `server-nestjs` above show **one** 
 
 ### Running the variants — one-time setup
 
-Because the variants wire to the **local dev libraries**, do this once before running any of them:
+The Laravel variants pull `rhino-laravel:dev-main` straight from Packagist (`composer install` is enough). For the JS dev libs (consumed via `file:`), build them once first:
 
 ```bash
-# Build the JS dev libs so the file:/path: consumers can resolve them
+# Build the JS dev libs so the file: consumers can resolve them
 ( cd ../rhino-react  && npm install && npm run build )   # required by every web client variant
 ( cd ../rhino-nestjs && npm install && npm run build )   # required by every server-nestjs-* variant
 ```

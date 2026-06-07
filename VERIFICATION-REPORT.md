@@ -15,6 +15,8 @@ There are **no functional blockers in the library**. There **are** several setup
 
 Dev-lib wiring confirmed: Laravel/Rails consume the sibling repos as source (Composer `path:` / Bundler `path:`); the JS packages are symlinked (`file:` → `../../rhino-react`, `../../rhino-nestjs`). There is **no `dev-main` branch** — the latest dev line is `main` on every lib (ahead of `release/4.1.0`), so all libs were left on `main`.
 
+> **Re-test (2026-06-07, second pass):** the Laravel variants were re-pointed to **Packagist `rhino-project/rhino-laravel:dev-main`** (removed the local `path` repo); Rails / NestJS / React stayed on their local repo `main`. All 9 backends + the single web client re-verified green — single (5 projects / 21 tasks / 10 labels), multi (org-scoped, cross-tenant 404), hybrid (all 3 groups, cross-group login 403 on LV/RB). The Packagist `dev-main` dist resolved to GitHub `main` @ `23917e4`, identical code to the local checkout. F6 (NestJS membership enforced at the resource layer rather than at login) is unchanged.
+
 ---
 
 ## Results matrix

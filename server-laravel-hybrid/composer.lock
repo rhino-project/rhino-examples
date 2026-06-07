@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4308f2674ded3b90cf61bd4bc389678e",
+    "content-hash": "3003269a64fcf75f787c87ee9e6e640c",
     "packages": [
         {
             "name": "brick/math",
@@ -1060,16 +1060,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v13.13.0",
+            "version": "v13.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "1daa6d3b4defe46976ccfa4fb0a7ab62717712a2"
+                "reference": "e60b1c817a9ef7da319e4007de6cfda5301a58c0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/1daa6d3b4defe46976ccfa4fb0a7ab62717712a2",
-                "reference": "1daa6d3b4defe46976ccfa4fb0a7ab62717712a2",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/e60b1c817a9ef7da319e4007de6cfda5301a58c0",
+                "reference": "e60b1c817a9ef7da319e4007de6cfda5301a58c0",
                 "shasum": ""
             },
             "require": {
@@ -1280,7 +1280,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-06-02T14:28:17+00:00"
+            "time": "2026-06-04T18:46:35+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -3371,10 +3371,16 @@
         {
             "name": "rhino-project/rhino-laravel",
             "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rhino-project/rhino-laravel.git",
+                "reference": "23917e4708ddae5cd8e02b61a97b982943d575d3"
+            },
             "dist": {
-                "type": "path",
-                "url": "../../rhino-laravel",
-                "reference": "0673245aafcc989856cd13e9f586c24b0d5bbabb"
+                "type": "zip",
+                "url": "https://api.github.com/repos/rhino-project/rhino-laravel/zipball/23917e4708ddae5cd8e02b61a97b982943d575d3",
+                "reference": "23917e4708ddae5cd8e02b61a97b982943d575d3",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.0",
@@ -3386,6 +3392,7 @@
                 "orchestra/testbench": "^10.0",
                 "phpunit/phpunit": "^11.0"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -3399,11 +3406,7 @@
                     "Rhino\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Rhino\\Tests\\": "tests/"
-                }
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3424,10 +3427,11 @@
                 "rest",
                 "rhino"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/rhino-project/rhino-laravel/issues",
+                "source": "https://github.com/rhino-project/rhino-laravel/tree/main"
+            },
+            "time": "2026-06-05T03:51:34+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",
