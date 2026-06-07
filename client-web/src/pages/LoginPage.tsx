@@ -4,16 +4,14 @@ import { Icon } from '../components/Icons';
 import { useToast } from '../components/Toaster';
 
 const seededUsers = [
-  { email: 'alice@acme.com', password: 'password', role: 'admin' },
-  { email: 'bob@acme.com',   password: 'password', role: 'manager' },
-  { email: 'carol@acme.com', password: 'password', role: 'member' },
-  { email: 'dave@acme.com',  password: 'password', role: 'viewer' },
+  { email: 'alice@example.com', password: 'password', role: 'user' },
+  { email: 'bob@example.com',   password: 'password', role: 'user' },
 ];
 
 export function LoginPage() {
   const { login, setOrganization } = useAuth();
   const toast = useToast();
-  const [email, setEmail] = useState('alice@acme.com');
+  const [email, setEmail] = useState('alice@example.com');
   const [password, setPassword] = useState('password');
   const [busy, setBusy] = useState(false);
 

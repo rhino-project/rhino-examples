@@ -3374,7 +3374,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../rhino-laravel",
-                "reference": "0673245aafcc989856cd13e9f586c24b0d5bbabb"
+                "reference": "23917e4708ddae5cd8e02b61a97b982943d575d3"
             },
             "require": {
                 "php": "^8.0",
