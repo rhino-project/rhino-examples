@@ -14,10 +14,14 @@ class UserRole extends Model
         'role_id',
         'organization_id',
         'permissions',
+        'granted_permissions',
+        'denied_permissions',
     ];
 
     protected $casts = [
         'permissions' => 'array',
+        'granted_permissions' => 'array',
+        'denied_permissions' => 'array',
     ];
 
     /**

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_01_000014) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_01_000021) do
   create_table "audit_logs", force: :cascade do |t|
     t.string "action", null: false
     t.bigint "auditable_id", null: false
@@ -54,6 +54,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000014) do
     t.datetime "updated_at", null: false
     t.index ["discarded_at"], name: "index_labels_on_discarded_at"
     t.index ["organization_id"], name: "index_labels_on_organization_id"
+  end
+
+  create_table "org_role_permissions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "organization_id", null: false
+    t.json "permissions", default: []
+    t.integer "role_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "role_id"], name: "index_org_role_permissions_on_organization_id_and_role_id", unique: true
+    t.index ["organization_id"], name: "index_org_role_permissions_on_organization_id"
+    t.index ["role_id"], name: "index_org_role_permissions_on_role_id"
   end
 
   create_table "organizations", force: :cascade do |t|
@@ -119,6 +130,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000014) do
 
   create_table "user_roles", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.json "denied_permissions", default: []
+    t.json "granted_permissions", default: []
     t.integer "organization_id", null: false
     t.json "permissions", default: []
     t.integer "role_id", null: false
@@ -144,6 +157,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000014) do
   add_foreign_key "comments", "tasks"
   add_foreign_key "comments", "users"
   add_foreign_key "labels", "organizations"
+  add_foreign_key "org_role_permissions", "organizations"
+  add_foreign_key "org_role_permissions", "roles"
   add_foreign_key "projects", "organizations"
   add_foreign_key "task_labels", "labels"
   add_foreign_key "task_labels", "tasks"

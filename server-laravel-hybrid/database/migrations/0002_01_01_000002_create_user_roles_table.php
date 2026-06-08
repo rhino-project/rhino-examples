@@ -22,6 +22,8 @@ return new class extends Migration
             // (member of every group), the back-compat default.
             $table->string('route_group')->nullable();
             $table->json('permissions')->nullable();
+            $table->json('granted_permissions')->nullable();
+            $table->json('denied_permissions')->nullable();
             $table->timestamps();
 
             $table->unique(['user_id', 'role_id', 'organization_id', 'route_group']);
