@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Comment;
 use App\Models\Label;
 use App\Models\Organization;
+use App\Models\OrgRolePermission;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\Task;
@@ -84,56 +85,82 @@ class DatabaseSeeder extends Seeder
         );
 
         // ---------------------------------------------------------------
-        // 4. User-Role Assignments
+        // 4. Layered permissions (Rhino 4.3)
+        //
+        // Role permissions are defined ONCE per (organization, role) in the
+        // org_role_permissions "role layer". Each user_roles row then carries
+        // only its personal delta: granted_permissions (extra abilities) and
+        // denied_permissions (carve-outs). Effective = (role ∪ granted) − denied,
+        // and deny always wins.
         // ---------------------------------------------------------------
-        // All Acme permissions
-        $acmePermissions = [
-            'projects.*', 'tasks.*', 'comments.*', 'labels.*',
+        $managerLayer = [
+            'projects.index', 'projects.show', 'projects.store', 'projects.update',
+            'tasks.index', 'tasks.show', 'tasks.store', 'tasks.update',
+            'comments.index', 'comments.show', 'comments.store', 'comments.update', 'comments.destroy',
+            'labels.index', 'labels.show', 'labels.store', 'labels.update',
+        ];
+        $memberLayer = [
+            'projects.index', 'projects.show',
+            'tasks.index', 'tasks.show', 'tasks.update',
+            'comments.index', 'comments.show', 'comments.store', 'comments.update',
+            'labels.index', 'labels.show',
+        ];
+        $viewerLayer = [
+            'projects.index', 'projects.show',
+            'tasks.index', 'tasks.show',
+            'comments.index', 'comments.show',
+            'labels.index', 'labels.show',
         ];
 
-        // Alice = admin @ Acme
-        UserRole::firstOrCreate(
+        // Shared role layer for Acme — one row per role, inherited by every member.
+        foreach ([
+            $roles['admin']->id => ['*'],
+            $roles['manager']->id => $managerLayer,
+            $roles['member']->id => $memberLayer,
+            $roles['viewer']->id => $viewerLayer,
+        ] as $roleId => $permissions) {
+            OrgRolePermission::updateOrCreate(
+                ['organization_id' => $acme->id, 'role_id' => $roleId],
+                ['permissions' => $permissions]
+            );
+        }
+        // Globex admins share the same wildcard role layer.
+        OrgRolePermission::updateOrCreate(
+            ['organization_id' => $globex->id, 'role_id' => $roles['admin']->id],
+            ['permissions' => ['*']]
+        );
+
+        // Alice = admin @ Acme — inherits '*' from the role layer (no deltas).
+        UserRole::updateOrCreate(
             ['user_id' => $alice->id, 'role_id' => $roles['admin']->id, 'organization_id' => $acme->id],
-            ['permissions' => ['*']]
+            ['permissions' => [], 'granted_permissions' => [], 'denied_permissions' => []]
         );
 
-        // Bob = manager @ Acme
-        UserRole::firstOrCreate(
+        // Bob = manager @ Acme, with a personal DENY: managers can normally
+        // delete comments, but Bob specifically cannot — deny wins over the role.
+        UserRole::updateOrCreate(
             ['user_id' => $bob->id, 'role_id' => $roles['manager']->id, 'organization_id' => $acme->id],
-            ['permissions' => [
-                'projects.index', 'projects.show', 'projects.store', 'projects.update',
-                'tasks.index', 'tasks.show', 'tasks.store', 'tasks.update',
-                'comments.index', 'comments.show', 'comments.store', 'comments.update', 'comments.destroy',
-                'labels.index', 'labels.show', 'labels.store', 'labels.update',
-            ]]
+            ['permissions' => [], 'granted_permissions' => [], 'denied_permissions' => ['comments.destroy']]
         );
 
-        // Carol = member @ Acme
-        UserRole::firstOrCreate(
+        // Carol = member @ Acme, with a personal GRANT: members can't normally
+        // delete comments, but Carol can — granted on top of the role layer.
+        // (Mirror image of Bob's deny on the very same ability.)
+        UserRole::updateOrCreate(
             ['user_id' => $carol->id, 'role_id' => $roles['member']->id, 'organization_id' => $acme->id],
-            ['permissions' => [
-                'projects.index', 'projects.show',
-                'tasks.index', 'tasks.show', 'tasks.update',
-                'comments.index', 'comments.show', 'comments.store', 'comments.update',
-                'labels.index', 'labels.show',
-            ]]
+            ['permissions' => [], 'granted_permissions' => ['comments.destroy'], 'denied_permissions' => []]
         );
 
-        // Dave = viewer @ Acme
-        UserRole::firstOrCreate(
+        // Dave = viewer @ Acme — read-only, straight from the role layer.
+        UserRole::updateOrCreate(
             ['user_id' => $dave->id, 'role_id' => $roles['viewer']->id, 'organization_id' => $acme->id],
-            ['permissions' => [
-                'projects.index', 'projects.show',
-                'tasks.index', 'tasks.show',
-                'comments.index', 'comments.show',
-                'labels.index', 'labels.show',
-            ]]
+            ['permissions' => [], 'granted_permissions' => [], 'denied_permissions' => []]
         );
 
-        // Eve = admin @ Globex
-        UserRole::firstOrCreate(
+        // Eve = admin @ Globex — inherits '*' from Globex's role layer.
+        UserRole::updateOrCreate(
             ['user_id' => $eve->id, 'role_id' => $roles['admin']->id, 'organization_id' => $globex->id],
-            ['permissions' => ['*']]
+            ['permissions' => [], 'granted_permissions' => [], 'denied_permissions' => []]
         );
 
         // ---------------------------------------------------------------

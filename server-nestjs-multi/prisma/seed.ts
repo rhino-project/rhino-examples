@@ -29,19 +29,40 @@ async function main() {
     create: { name: 'Globex Inc', slug: 'globex' },
   });
 
-  // --------- Users + UserRoles ---------
+  // --------- Layered permissions (Rhino 4.3) ---------
+  // Role permissions live ONCE per (organization, role) in org_role_permissions
+  // (the shared "role layer"). Each userRole carries only its personal delta:
+  // grantedPermissions (extra abilities) and deniedPermissions (carve-outs).
+  // Effective = (role ∪ granted) − denied, and deny always wins.
+  const managerLayer = ['projects.index','projects.show','projects.store','projects.update','tasks.index','tasks.show','tasks.store','tasks.update','comments.index','comments.show','comments.store','comments.update','comments.destroy','labels.index','labels.show','labels.store','labels.update'];
+  const memberLayer = ['projects.index','projects.show','tasks.index','tasks.show','tasks.update','comments.index','comments.show','comments.store','comments.update','labels.index','labels.show'];
+  const viewerLayer = ['projects.index','projects.show','tasks.index','tasks.show','comments.index','comments.show','labels.index','labels.show'];
+
+  const roleLayers = [
+    { org: acme,   role: 'admin',   permissions: ['*'] },
+    { org: acme,   role: 'manager', permissions: managerLayer },
+    { org: acme,   role: 'member',  permissions: memberLayer },
+    { org: acme,   role: 'viewer',  permissions: viewerLayer },
+    { org: globex, role: 'admin',   permissions: ['*'] },
+  ];
+  for (const rl of roleLayers) {
+    const roleId = roleBySlug[rl.role].id;
+    const existing = await prisma.orgRolePermission.findFirst({ where: { organizationId: rl.org.id, roleId } });
+    const data = { organizationId: rl.org.id, roleId, permissions: JSON.stringify(rl.permissions) };
+    if (existing) await prisma.orgRolePermission.update({ where: { id: existing.id }, data });
+    else await prisma.orgRolePermission.create({ data });
+  }
+
+  // --------- Users + UserRoles (deltas only) ---------
   const password = await bcrypt.hash('password123', 10);
   const members = [
-    { name: 'Alice Admin',   email: 'alice@acme.com',   org: acme,   role: 'admin',
-      permissions: ['*'] },
-    { name: 'Bob Manager',   email: 'bob@acme.com',     org: acme,   role: 'manager',
-      permissions: ['projects.index','projects.show','projects.store','projects.update','tasks.*','comments.*','labels.index','labels.show'] },
-    { name: 'Carol Member',  email: 'carol@acme.com',   org: acme,   role: 'member',
-      permissions: ['projects.index','projects.show','tasks.index','tasks.show','tasks.store','tasks.update','comments.*'] },
-    { name: 'Dave Viewer',   email: 'dave@acme.com',    org: acme,   role: 'viewer',
-      permissions: ['projects.index','projects.show','tasks.index','tasks.show','comments.index','comments.show'] },
-    { name: 'Eve Admin',     email: 'eve@globex.com',   org: globex, role: 'admin',
-      permissions: ['*'] },
+    { name: 'Alice Admin',  email: 'alice@acme.com', org: acme,   role: 'admin',   granted: [] as string[], denied: [] as string[] },
+    // Bob: managers can delete comments, but Bob specifically cannot (deny wins).
+    { name: 'Bob Manager',  email: 'bob@acme.com',   org: acme,   role: 'manager', granted: [], denied: ['comments.destroy'] },
+    // Carol: members can't delete comments, but Carol can (mirror of Bob's deny).
+    { name: 'Carol Member', email: 'carol@acme.com', org: acme,   role: 'member',  granted: ['comments.destroy'], denied: [] },
+    { name: 'Dave Viewer',  email: 'dave@acme.com',  org: acme,   role: 'viewer',  granted: [], denied: [] },
+    { name: 'Eve Admin',    email: 'eve@globex.com', org: globex, role: 'admin',   granted: [], denied: [] },
   ];
 
   for (const m of members) {
@@ -55,18 +76,20 @@ async function main() {
     const existing = await prisma.userRole.findFirst({
       where: { userId: user.id, organizationId: m.org.id },
     });
+    const data = {
+      permissions: JSON.stringify([]),
+      grantedPermissions: JSON.stringify(m.granted),
+      deniedPermissions: JSON.stringify(m.denied),
+    };
     if (existing) {
-      await prisma.userRole.update({
-        where: { id: existing.id },
-        data: { permissions: JSON.stringify(m.permissions) },
-      });
+      await prisma.userRole.update({ where: { id: existing.id }, data });
     } else {
       await prisma.userRole.create({
         data: {
           userId: user.id,
           organizationId: m.org.id,
           roleId: roleBySlug[m.role].id,
-          permissions: JSON.stringify(m.permissions),
+          ...data,
         },
       });
     }

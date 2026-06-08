@@ -55,67 +55,74 @@ eve = User.find_or_create_by!(email: "eve@globex.com") do |u|
 end
 
 # ---------------------------------------------------------------
-# 4. User-Role Assignments
+# 4. Layered permissions (Rhino 4.3)
+#
+# Role permissions are defined ONCE per (organization, role) in the
+# org_role_permissions "role layer". Each user_roles row then carries only its
+# personal delta: granted_permissions (extra abilities) and denied_permissions
+# (carve-outs). Effective = (role ∪ granted) − denied, and deny always wins.
 # ---------------------------------------------------------------
-# Alice = admin @ Acme
-UserRole.find_or_create_by!(
-  user_id: alice.id,
-  role_id: roles["admin"].id,
-  organization_id: acme.id
-) do |ur|
-  ur.permissions = ["*"]
+manager_layer = [
+  "projects.index", "projects.show", "projects.store", "projects.update",
+  "tasks.index", "tasks.show", "tasks.store", "tasks.update",
+  "comments.index", "comments.show", "comments.store", "comments.update", "comments.destroy",
+  "labels.index", "labels.show", "labels.store", "labels.update"
+]
+member_layer = [
+  "projects.index", "projects.show",
+  "tasks.index", "tasks.show", "tasks.update",
+  "comments.index", "comments.show", "comments.store", "comments.update",
+  "labels.index", "labels.show"
+]
+viewer_layer = [
+  "projects.index", "projects.show",
+  "tasks.index", "tasks.show",
+  "comments.index", "comments.show",
+  "labels.index", "labels.show"
+]
+
+# Shared role layer for Acme — one row per role, inherited by every member.
+{
+  roles["admin"].id => ["*"],
+  roles["manager"].id => manager_layer,
+  roles["member"].id => member_layer,
+  roles["viewer"].id => viewer_layer
+}.each do |role_id, permissions|
+  orp = OrgRolePermission.find_or_initialize_by(organization_id: acme.id, role_id: role_id)
+  orp.permissions = permissions
+  orp.save!
+end
+# Globex admins share the same wildcard role layer.
+OrgRolePermission.find_or_initialize_by(organization_id: globex.id, role_id: roles["admin"].id).tap do |orp|
+  orp.permissions = ["*"]
+  orp.save!
 end
 
-# Bob = manager @ Acme
-UserRole.find_or_create_by!(
-  user_id: bob.id,
-  role_id: roles["manager"].id,
-  organization_id: acme.id
-) do |ur|
-  ur.permissions = [
-    "projects.index", "projects.show", "projects.store", "projects.update",
-    "tasks.index", "tasks.show", "tasks.store", "tasks.update",
-    "comments.index", "comments.show", "comments.store", "comments.update", "comments.destroy",
-    "labels.index", "labels.show", "labels.store", "labels.update"
-  ]
+# Helper: assign a role and (re)set the per-user deltas.
+assign = lambda do |user, role_id, org_id, granted: [], denied: []|
+  ur = UserRole.find_or_initialize_by(user_id: user.id, role_id: role_id, organization_id: org_id)
+  ur.permissions = []
+  ur.granted_permissions = granted
+  ur.denied_permissions = denied
+  ur.save!
 end
 
-# Carol = member @ Acme
-UserRole.find_or_create_by!(
-  user_id: carol.id,
-  role_id: roles["member"].id,
-  organization_id: acme.id
-) do |ur|
-  ur.permissions = [
-    "projects.index", "projects.show",
-    "tasks.index", "tasks.show", "tasks.update",
-    "comments.index", "comments.show", "comments.store", "comments.update",
-    "labels.index", "labels.show"
-  ]
-end
+# Alice = admin @ Acme — inherits '*' from the role layer (no deltas).
+assign.call(alice, roles["admin"].id, acme.id)
 
-# Dave = viewer @ Acme
-UserRole.find_or_create_by!(
-  user_id: dave.id,
-  role_id: roles["viewer"].id,
-  organization_id: acme.id
-) do |ur|
-  ur.permissions = [
-    "projects.index", "projects.show",
-    "tasks.index", "tasks.show",
-    "comments.index", "comments.show",
-    "labels.index", "labels.show"
-  ]
-end
+# Bob = manager @ Acme, with a personal DENY: managers can normally delete
+# comments, but Bob specifically cannot — deny wins over the role.
+assign.call(bob, roles["manager"].id, acme.id, denied: ["comments.destroy"])
 
-# Eve = admin @ Globex
-UserRole.find_or_create_by!(
-  user_id: eve.id,
-  role_id: roles["admin"].id,
-  organization_id: globex.id
-) do |ur|
-  ur.permissions = ["*"]
-end
+# Carol = member @ Acme, with a personal GRANT: members can't normally delete
+# comments, but Carol can — granted on top of the role layer (mirror of Bob).
+assign.call(carol, roles["member"].id, acme.id, granted: ["comments.destroy"])
+
+# Dave = viewer @ Acme — read-only, straight from the role layer.
+assign.call(dave, roles["viewer"].id, acme.id)
+
+# Eve = admin @ Globex — inherits '*' from Globex's role layer.
+assign.call(eve, roles["admin"].id, globex.id)
 
 # ---------------------------------------------------------------
 # 5. Projects
