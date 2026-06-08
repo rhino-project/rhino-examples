@@ -10,7 +10,7 @@
     "rhino:types": "cd ../server-laravel && php artisan rhino:export-types --output=../client-web/src/rhino.d.ts"
   },
   "dependencies": {
-    "@rhino-dev/rhino-react": "^4.0.1",
+    "@rhino-dev/rhino-react": "^4.2.0",
     "@tanstack/react-query": "^5.59.0",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",

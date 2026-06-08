@@ -28,7 +28,7 @@ This repo is the **reference implementation** — the same product (TaskFlow), t
 
 | Directory | Stack | Default Port | Install |
 |---|---|---|---|
-| [`server-laravel/`](./server-laravel) | Laravel 11 + PHP 8.4 | `8000` | `composer require rhino-project/rhino-laravel` |
+| [`server-laravel/`](./server-laravel) | Laravel 13 + PHP 8.4 | `8000` | `composer require rhino-project/rhino-laravel` |
 | [`server-rails/`](./server-rails) | Rails 7 + Ruby 3.3 | `3000` | `bundle add rhino-rails` |
 | [`server-nestjs/`](./server-nestjs) | NestJS 10 + Prisma | `8004` | `npm i @rhino-dev/rhino-nestjs` |
 | [`client-web/`](./client-web) | React 19 + Vite + Tailwind | `5173` | `npm i @rhino-dev/rhino-react` |
@@ -40,31 +40,19 @@ All five apps share the same product spec — see [`PRD.md`](./PRD.md) for the 2
 
 ## Configuration variants
 
-> ⚠️ These live on the **`examples/config-variants`** branch only, and they wire to the **dev libraries**:
-> - **Laravel** (`server-laravel-*`) pulls `rhino-project/rhino-laravel:dev-main` from **Packagist** (the published dev channel — no local checkout needed).
-> - **Rails / NestJS / React** wire to the **local sibling repos** (Bundler `path:` → `../../rhino-rails`, npm `file:` → `../../rhino-nestjs` / `../../rhino-react`), so keep those checked out on `main` next to this repo.
->
-> They're kept off `main` because they target unreleased dev libraries.
+> These build the **same TaskFlow domain** in three multi-tenancy shapes (single / multi / hybrid) across all three backends. Like the base apps, they install the libraries **from the registry** (Composer `^4.2.0`, Bundler `~> 4.2.0`, npm `^4.2.0`) — no local checkout of the `rhino-*` repos required.
 
 The base `server-laravel` / `server-rails` / `server-nestjs` above show **one** multi-tenancy shape: the classic path-prefix tenant (`/api/{org}/...`). Real apps come in more shapes, and Rhino expresses them with route-group **config**, not controllers. These variants build the **same TaskFlow domain** three different ways, in **all three backends**, so you can see and test each end to end:
 
 | Variant | Tenancy model | What it demonstrates | Ports (LV / RB / Nest) |
 |---|---|---|---|
 | `*-single` | **Single-tenant, no org** | No `Organization`/`Role`/`UserRole` at all — every record is owned by its `user_id`; shared reference tables (labels) stay global. | 8000 / 3000 / 8004 |
-| `*-multi` | **Multitenant-only** | One `tenant` group, `/api/{org}/...`, org-scoped data — the base app's config, on dev libs. | 8001 / 3001 / 8005 |
+| `*-multi` | **Multitenant-only** | One `tenant` group, `/api/{org}/...`, org-scoped data — same shape as the base app. | 8001 / 3001 / 8005 |
 | `*-hybrid` | **Hybrid (multiple groups)** | Three route groups in one app: a user-owned `personal` group **plus** two org-scoped client types (`agency`, `vendor`) on **separate subdomains**, each with its **own sign-in** + group-membership enforcement. | 8002 / 3002 / 8006 |
 
-### Running the variants — one-time setup
+### Running the variants — setup
 
-The Laravel variants pull `rhino-laravel:dev-main` straight from Packagist (`composer install` is enough). For the JS dev libs (consumed via `file:`), build them once first:
-
-```bash
-# Build the JS dev libs so the file: consumers can resolve them
-( cd ../rhino-react  && npm install && npm run build )   # required by every web client variant
-( cd ../rhino-nestjs && npm install && npm run build )   # required by every server-nestjs-* variant
-```
-
-Per-stack prerequisites:
+Each app installs its Rhino library from the registry, so a plain install is enough. Per-stack prerequisites:
 
 - **Laravel** (`server-laravel-*`): needs **PHP ≥ 8.4.1** — the apps are on Laravel 13 / Symfony 8. `composer install && cp .env.example .env && php artisan key:generate && php artisan migrate:fresh --seed`.
 - **Rails** (`server-rails-*`): needs the Ruby in `.ruby-version` (**3.4.7**). `bundle install && bin/rails db:prepare && bin/rails db:seed`.
@@ -110,7 +98,7 @@ curl -H 'Host: acme.agency.lvh.me' http://127.0.0.1:8002/api/...
 
 ### Base vs. variants
 
-The base apps install the libraries **from the registry** — the "production-style" reference this README documents. The variants wire to the **local dev** libraries so you can test unreleased features. The base and `*-multi` therefore overlap **by design**: same config, different lib source.
+The base `server-*` apps are the minimal "production-style" reference (one multi-tenancy shape). The `*-single` / `*-multi` / `*-hybrid` variants demonstrate the full range of Rhino's tenancy models over the same domain. Both install the libraries from the registry; the base and `*-multi` overlap **by design** (same config).
 
 ---
 
@@ -129,7 +117,7 @@ The base apps install the libraries **from the registry** — the "production-st
                 │                 │                 │
         ┌───────▼──────┐  ┌───────▼──────┐  ┌──────▼───────┐
         │ server-laravel│  │ server-rails │  │ server-nestjs│
-        │  Laravel 11   │  │  Rails 7     │  │  NestJS 10   │
+        │  Laravel 13   │  │  Rails 7     │  │  NestJS 10   │
         └───────┬───────┘  └───────┬──────┘  └──────┬───────┘
                 │                  │                │
                 └──────────────────┼────────────────┘

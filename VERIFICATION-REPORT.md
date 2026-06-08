@@ -19,6 +19,21 @@ Dev-lib wiring confirmed: Laravel/Rails consume the sibling repos as source (Com
 
 ---
 
+## Final pass — published 4.2.0 packages (2026-06-08)
+
+All examples were re-pointed off the local dev libs onto the **published 4.2.0 registry packages** and re-verified end to end:
+
+- **Dependencies rewired** (no more `path:` / `file:` / `dev-main`): Laravel `^4.2.0` (Packagist), Rails `~> 4.2.0` (RubyGems), NestJS `^4.2.0` (npm), React clients `^4.2.0` (npm). Confirmed real registry installs (Laravel lock `v4.2.0`, Rails lock `rhino-rails (4.2.0)` from rubygems, Nest/React `node_modules` are real dirs @ 4.2.0 — not symlinks).
+- **API matrix — all 9 backends green:**
+  - single (Laravel/Rails/Nest): login `org=null`, projects/tasks/labels `200`.
+  - multi: org-scoped `200`, cross-tenant isolation `404`.
+  - hybrid: agency/vendor/personal groups `200`, **cross-group login `403`** on all three — including NestJS, confirming the v4.2.0 login-membership fix is live in the published package.
+- **Web clients (clean consoles):** `client-web-single` → Laravel-single (dashboard 5/21/10), `client-web-hybrid` → Laravel-hybrid (group-aware sign-in, `projects` via Host routing), `client-web` → Laravel-multi (`alice@acme.com`, org `acme-corp`).
+
+**Conclusion: the config-variants examples run cleanly against the released 4.2.0 packages — ready to merge to `main`.** Remaining nit: the README "Configuration variants" section still describes the variants as wiring to *local dev libs*; that narrative should be updated as part of the merge (they now use the registry).
+
+---
+
 ## Results matrix
 
 | Variant | Backend | Port | Boot | Auth | Resources | Notes |
