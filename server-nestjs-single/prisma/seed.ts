@@ -39,8 +39,20 @@ async function main() {
     return prisma.task.create({ data: { projectId, title, status, priority, assignedTo } });
   }
 
+  // ALICE-owned project: mix of alice/bob assignees and done/non-done statuses.
+  //  - 2 alice non-done tasks + 1 alice DONE task -> alice assignedToMe=2; default 'active' hides the done one
+  //  - 1 bob task inside alice's project          -> proves scope=assignedToMe(alice) EXCLUDES it,
+  //                                                   yet show(scope=assignedToMe) still returns it (200)
   const aliceTask = await ensureTask(aliceProject.id, 'Design homepage', 'in_progress', 'high', alice.id);
+  await ensureTask(aliceProject.id, 'Write copy', 'todo', 'medium', alice.id);
+  await ensureTask(aliceProject.id, 'Launch site', 'done', 'high', alice.id);
+  const bobTaskInAliceProject = await ensureTask(aliceProject.id, 'Bob helps QA', 'todo', 'low', bob.id);
+
+  // BOB-owned project: 1 bob non-done + 1 bob DONE  -> bob assignedToMe=1
   await ensureTask(bobProject.id, 'Port endpoints', 'todo', 'medium', bob.id);
+  await ensureTask(bobProject.id, 'Cut over DNS', 'done', 'high', bob.id);
+  // eslint-disable-next-line no-console
+  console.log('BOB_TASK_IN_ALICE_PROJECT_ID=' + bobTaskInAliceProject.id);
 
   // --------- Comments (author via userId; owned via task→project) ---------
   const existingComment = await prisma.comment.findFirst({ where: { taskId: aliceTask.id } });

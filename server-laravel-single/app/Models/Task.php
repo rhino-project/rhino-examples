@@ -55,6 +55,8 @@ class Task extends RhinoModel
             'due_date',
         ];
     public static $defaultSort = 'created_at';
+    public static $allowedScopes = ['assignedToMe'];
+    public static $defaultScope = 'active';
     public static $allowedFields = [
             'id',
             'title',
@@ -98,6 +100,23 @@ class Task extends RhinoModel
     // ---------------------------------------------------------------
     // Relationships
     // ---------------------------------------------------------------
+
+    // ---------------------------------------------------------------
+    // Named scopes (used by Rhino ?scope= feature)
+    // ---------------------------------------------------------------
+
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', '!=', 'done');
+    }
+
+    public function scopeAssignedToMe(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user): \Illuminate\Database\Eloquent\Builder
+    {
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+        return $query->where('assignee_id', $user->id)->where('status', '!=', 'done');
+    }
 
     public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

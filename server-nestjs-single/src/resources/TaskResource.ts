@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { ModelRegistration } from '@rhino-dev/rhino-nestjs';
 
 import { TaskPolicy } from '../policies/TaskPolicy';
+import { AssignedToMeScope, ActiveTasksScope } from '../scopes/AssignedToMeScope';
 
 const validationStore: Record<string, z.ZodTypeAny> = {
   '*': z.object({
@@ -43,4 +44,6 @@ export const tasksRegistration: ModelRegistration = {
   hasAuditTrail: true,
   owner: 'project',
   fkConstraints: [{ field: 'projectId', model: 'project' }, { field: 'assignedTo', model: 'user' }],
+  namedScopes: { assignedToMe: AssignedToMeScope, active: ActiveTasksScope },
+  defaultScope: 'active',
 };

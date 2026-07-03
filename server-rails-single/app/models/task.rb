@@ -10,6 +10,16 @@ class Task < Rhino::RhinoModel
   rhino_fields :id, :title, :description, :status, :priority, :estimated_hours, :due_date, :project_id, :assignee_id, :created_at, :updated_at
   rhino_includes :project, :assignee
 
+  # Named scopes for ?scope= (feature/named-scopes branch).
+  # `active` is a bare AR scope (whitelisted by symbol). `assignedToMe` (wire)
+  # underscores to :assigned_to_me and is a Proc receiving (relation, user).
+  rhino_scopes :active, assigned_to_me: ->(relation, user) {
+    user ? relation.where(assignee_id: user.id).where.not(status: "done") : relation.none
+  }
+  rhino_default_scope :active
+
+  scope :active, -> { where.not(status: "done") }
+
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: %w[todo in_progress in_review done] }, allow_nil: true
   validates :priority, inclusion: { in: %w[low medium high critical] }, allow_nil: true
