@@ -8,6 +8,7 @@ import {
 } from '@rhino-dev/rhino-nestjs';
 
 import { buildRhinoConfig } from './rhino.config';
+import { DashboardController } from './dashboard/dashboard.controller';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,7 @@ const prisma = new PrismaClient();
       autoTenantMiddleware: false, // tenant rewrite runs in main.ts
     }),
   ],
+  controllers: [DashboardController],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },

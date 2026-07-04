@@ -295,5 +295,70 @@ class DatabaseSeeder extends Seeder
         Comment::firstOrCreate(
             ['body' => 'Stripe seems like the best option for our use case.', 'task_id' => $task3->id, 'user_id' => $alice->id],
         );
+
+        // ---------------------------------------------------------------
+        // 9. Globex data (DISTINCT counts so multitenant isolation is
+        //    observable on the dashboard: Acme = 3 projects / 4 tasks,
+        //    Globex = 2 projects / 3 tasks, with different status mixes).
+        // ---------------------------------------------------------------
+        $globexPlatform = Project::firstOrCreate(
+            ['title' => 'Data Platform', 'organization_id' => $globex->id],
+            [
+                'description' => 'Internal analytics and data warehouse platform.',
+                'status' => 'active',
+                'budget' => 200000.00,
+                'internal_notes' => 'Globex confidential — do not leak to other tenants.',
+                'starts_at' => '2026-03-01',
+                'ends_at' => '2026-10-31',
+            ]
+        );
+
+        $globexSecurity = Project::firstOrCreate(
+            ['title' => 'Security Audit', 'organization_id' => $globex->id],
+            [
+                'description' => 'Annual third-party security audit and remediation.',
+                'status' => 'active',
+                'budget' => 75000.00,
+                'internal_notes' => null,
+                'starts_at' => '2026-05-01',
+                'ends_at' => '2026-08-31',
+            ]
+        );
+
+        Task::firstOrCreate(
+            ['title' => 'Provision warehouse cluster', 'project_id' => $globexPlatform->id],
+            [
+                'description' => 'Stand up the Snowflake cluster for analytics.',
+                'status' => 'in_progress',
+                'priority' => 'high',
+                'estimated_hours' => 20.00,
+                'due_date' => '2026-04-15',
+                'assignee_id' => $eve->id,
+            ]
+        );
+
+        Task::firstOrCreate(
+            ['title' => 'Define ETL pipelines', 'project_id' => $globexPlatform->id],
+            [
+                'description' => 'Author the ingestion pipelines for core datasets.',
+                'status' => 'in_progress',
+                'priority' => 'medium',
+                'estimated_hours' => 30.00,
+                'due_date' => '2026-05-30',
+                'assignee_id' => $eve->id,
+            ]
+        );
+
+        Task::firstOrCreate(
+            ['title' => 'Pen-test report review', 'project_id' => $globexSecurity->id],
+            [
+                'description' => 'Review findings from the external penetration test.',
+                'status' => 'todo',
+                'priority' => 'high',
+                'estimated_hours' => 6.00,
+                'due_date' => '2026-06-10',
+                'assignee_id' => $eve->id,
+            ]
+        );
     }
 }

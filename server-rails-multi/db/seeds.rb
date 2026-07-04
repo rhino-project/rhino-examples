@@ -215,6 +215,51 @@ task4 = Task.find_or_create_by!(
 end
 
 # ---------------------------------------------------------------
+# 6b. Globex data — a distinct second tenant so the dashboard demo
+#     (custom controller built on Rhino.query) shows cross-org isolation:
+#     each org's dashboard reports only its own aggregates.
+# ---------------------------------------------------------------
+globex_dw = Project.find_or_create_by!(title: "Data Warehouse", organization_id: globex.id) do |p|
+  p.description = "Central analytics warehouse."
+  p.status = "active"
+  p.budget = 90_000.00
+  p.starts_at = "2026-01-10"
+  p.ends_at = "2026-08-31"
+end
+
+globex_billing = Project.find_or_create_by!(title: "Billing Revamp", organization_id: globex.id) do |p|
+  p.description = "Rework the billing subsystem."
+  p.status = "active"
+  p.budget = 40_000.00
+  p.starts_at = "2026-02-01"
+  p.ends_at = "2026-06-30"
+end
+
+Task.find_or_create_by!(title: "Provision cluster", project_id: globex_dw.id) do |t|
+  t.status = "in_progress"
+  t.priority = "high"
+  t.estimated_hours = 10.00
+  t.due_date = "2026-03-01"
+  t.assignee_id = eve.id
+end
+
+Task.find_or_create_by!(title: "ETL pipeline", project_id: globex_dw.id) do |t|
+  t.status = "todo"
+  t.priority = "high"
+  t.estimated_hours = 20.00
+  t.due_date = "2026-04-01"
+  t.assignee_id = eve.id
+end
+
+Task.find_or_create_by!(title: "Build dashboards", project_id: globex_billing.id) do |t|
+  t.status = "in_review"
+  t.priority = "medium"
+  t.estimated_hours = 8.00
+  t.due_date = "2026-04-15"
+  t.assignee_id = eve.id
+end
+
+# ---------------------------------------------------------------
 # 7. Labels
 # ---------------------------------------------------------------
 label_bug = Label.find_or_create_by!(name: "bug", organization_id: acme.id) do |l|

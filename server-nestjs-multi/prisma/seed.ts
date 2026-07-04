@@ -139,6 +139,32 @@ async function main() {
     }
   }
 
+  // --------- Projects + Tasks (Globex) ---------
+  // A distinct second tenant with a different shape from Acme, so the dashboard
+  // demo (custom controller built on ResourceScopeService) shows cross-org
+  // isolation: each org's dashboard reports only its own aggregates.
+  const gProjects = [
+    { title: 'Data Warehouse', status: 'active', budget: 90000.0 },
+    { title: 'Billing Revamp', status: 'active', budget: 40000.0 },
+  ];
+  const gCreated: Record<string, { id: number }> = {};
+  for (const p of gProjects) {
+    let rec = await prisma.project.findFirst({ where: { title: p.title, organizationId: globex.id } });
+    if (!rec) rec = await prisma.project.create({ data: { ...p, organizationId: globex.id } });
+    gCreated[p.title] = rec;
+  }
+  const gTasks = [
+    { title: 'Provision cluster', status: 'in_progress', priority: 'high',   projectId: gCreated['Data Warehouse'].id },
+    { title: 'ETL pipeline',      status: 'todo',        priority: 'high',   projectId: gCreated['Data Warehouse'].id },
+    { title: 'Build dashboards',  status: 'todo',        priority: 'medium', projectId: gCreated['Billing Revamp'].id },
+  ];
+  for (const t of gTasks) {
+    const existing = await prisma.task.findFirst({ where: { title: t.title, projectId: t.projectId } });
+    if (!existing) {
+      await prisma.task.create({ data: { ...t, assignedTo: userByEmail['eve@globex.com']?.id ?? null } });
+    }
+  }
+
   // --------- Comments (demonstrates UUID primary key — AC-7) ---------
   const firstTask = await prisma.task.findFirst({ where: { title: 'Design homepage' } });
   if (firstTask) {

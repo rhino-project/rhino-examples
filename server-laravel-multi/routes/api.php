@@ -8,6 +8,22 @@ use Rhino\Http\Middleware\EnforceGroupMembership;
 
 /*
 |--------------------------------------------------------------------------
+| Custom Dashboard Route (demonstrates Rhino::query resource-scope resolver)
+|--------------------------------------------------------------------------
+|
+| Registered ABOVE the auto-generated CRUD routes so it wins the match for
+| /api/{organization}/dashboard. It runs inside the tenant group's middleware:
+| auth:sanctum authenticates the user, then ResolveOrganizationFromRoute
+| resolves the org from the {organization} route param (and enforces that the
+| user belongs to it), so Rhino::query() inside the controller is auto-scoped
+| to this tenant via ambient context.
+*/
+Route::middleware(['auth:sanctum', \Rhino\Http\Middleware\ResolveOrganizationFromRoute::class])
+    ->get('{organization}/dashboard', [\App\Http\Controllers\DashboardController::class, 'summary'])
+    ->where('organization', '[^/]+');
+
+/*
+|--------------------------------------------------------------------------
 | Invitation Routes
 |--------------------------------------------------------------------------
 */
