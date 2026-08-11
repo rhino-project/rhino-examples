@@ -7,9 +7,13 @@ class Label < Rhino::RhinoModel
   rhino_filters :name
   rhino_sorts :name
   rhino_default_sort "created_at"
-  rhino_fields :id, :name, :color, :created_at, :updated_at
+  rhino_fields :id, :name, :slug, :color, :created_at, :updated_at
 
   rhino_except_actions :forceDelete
+
+  # Route Key: member endpoints match slug instead of the numeric id
+  # (GET /api/{org}/labels/{slug}; numeric ids no longer match).
+  rhino_route_key :slug
 
   validates :name, length: { maximum: 255 }, allow_nil: true
 

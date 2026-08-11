@@ -42,7 +42,7 @@ RSpec.describe "Labels", type: :request do
     user = create_user_in_org("admin", @org)
     label = create(:label, organization_id: @org.id)
 
-    put "/api/#{@org.slug}/labels/#{label.id}", params: {
+    put "/api/#{@org.slug}/labels/#{label.slug}", params: {
       name: "updated-name"
     }, headers: auth_headers(user), as: :json
 
@@ -55,7 +55,7 @@ RSpec.describe "Labels", type: :request do
     user = create_user_in_org("admin", @org)
     label = create(:label, organization_id: @org.id)
 
-    delete "/api/#{@org.slug}/labels/#{label.id}", headers: auth_headers(user), as: :json
+    delete "/api/#{@org.slug}/labels/#{label.slug}", headers: auth_headers(user), as: :json
 
     expect(response).to have_http_status(:no_content)
     expect(Label.kept.find_by(id: label.id)).to be_nil
@@ -71,7 +71,7 @@ RSpec.describe "Labels", type: :request do
     label = create(:label, organization_id: @org.id)
     label.discard!
 
-    delete "/api/#{@org.slug}/labels/#{label.id}/force-delete", headers: auth_headers(user), as: :json
+    delete "/api/#{@org.slug}/labels/#{label.slug}/force-delete", headers: auth_headers(user), as: :json
 
     expect(response).to have_http_status(:not_found)
   end

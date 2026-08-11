@@ -25,9 +25,12 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
     prismaClient: prisma as any,
     models: {
       projects: { ...projectsRegistration, model: 'project' },
-      tasks: { ...tasksRegistration, model: 'task', scopes: [TaskScope] },
+      // Route Key: match member routes (/tasks/:id) on hashId instead of
+      // the numeric primary key. PK values no longer resolve.
+      tasks: { ...tasksRegistration, model: 'task', scopes: [TaskScope], routeKey: 'hashId' },
       comments: { ...commentsRegistration, model: 'comment' },
-      labels: { ...labelsRegistration, model: 'label' },
+      // Route Key: labels are addressed by slug (/labels/:id → slug column).
+      labels: { ...labelsRegistration, model: 'label', routeKey: 'slug' },
     },
     routeGroups: {
       auth: {

@@ -158,6 +158,10 @@ model Project {
 
 model Task {
   id             Int       @id @default(autoincrement())
+  // Route Key: member endpoints match /tasks/:id against this column
+  // (see `routeKey: 'hashId'` in src/rhino.config.ts). Seeds use short
+  // random hex; the uuid() default only covers ad-hoc API creates.
+  hashId         String    @unique @default(uuid())
   projectId      Int
   assignedTo     Int?
   title          String
@@ -197,6 +201,10 @@ model Comment {
 model Label {
   id             Int       @id @default(autoincrement())
   organizationId Int
+  // Route Key: member endpoints match /labels/:id against this column
+  // (see `routeKey: 'slug'` in src/rhino.config.ts). Seeds use the
+  // kebab-cased name; the uuid() default only covers ad-hoc API creates.
+  slug           String    @unique @default(uuid())
   name           String
   color          String?
   createdAt      DateTime  @default(now())

@@ -47,7 +47,7 @@ it('admin can update a label', function () {
     $label = Label::factory()->create(['organization_id' => $this->org->id]);
 
     $response = $this->actingAs($user)
-        ->putJson('/api/' . $this->org->slug . '/labels/' . $label->id, [
+        ->putJson('/api/' . $this->org->slug . '/labels/' . $label->slug, [
             'name' => 'updated-name',
         ]);
 
@@ -60,7 +60,7 @@ it('admin can soft-delete a label', function () {
     $label = Label::factory()->create(['organization_id' => $this->org->id]);
 
     $response = $this->actingAs($user)
-        ->deleteJson('/api/' . $this->org->slug . '/labels/' . $label->id);
+        ->deleteJson('/api/' . $this->org->slug . '/labels/' . $label->slug);
 
     $response->assertStatus(204);
     expect(Label::find($label->id))->toBeNull();
@@ -79,7 +79,7 @@ it('force-delete route does not exist for labels', function () {
     $label->delete();
 
     $response = $this->actingAs($user)
-        ->deleteJson('/api/' . $this->org->slug . '/labels/' . $label->id . '/force-delete');
+        ->deleteJson('/api/' . $this->org->slug . '/labels/' . $label->slug . '/force-delete');
 
     // Should get 404 because the route is excluded
     $response->assertStatus(404);

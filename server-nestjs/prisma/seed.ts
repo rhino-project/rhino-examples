@@ -1,7 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
+
+// Route Key: tasks are addressed by a short opaque hash id instead of the
+// numeric PK (see `routeKey: 'hashId'` in src/rhino.config.ts).
+const makeHashId = () => randomBytes(6).toString('hex'); // ~12 hex chars
+
+// Route Key: labels are addressed by slug (kebab-case of the name).
+const kebab = (s: string) => s.toLowerCase().trim().replace(/\s+/g, '-');
 
 async function main() {
   // --------- Roles (shared across orgs) ---------
@@ -93,6 +101,7 @@ async function main() {
     if (!existing) {
       await prisma.task.create({
         data: {
+          hashId: makeHashId(),
           projectId: websiteProject.id,
           title: t.title,
           status: t.status,
@@ -137,7 +146,7 @@ async function main() {
   for (const l of labels) {
     const existing = await prisma.label.findFirst({ where: { name: l.name, organizationId: acme.id } });
     if (!existing) {
-      await prisma.label.create({ data: { ...l, organizationId: acme.id } });
+      await prisma.label.create({ data: { ...l, slug: kebab(l.name), organizationId: acme.id } });
     }
   }
 

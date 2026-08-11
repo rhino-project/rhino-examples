@@ -16,6 +16,7 @@ export async function seed(): Promise<void> {
     update: {},
     create: {
       id: 1,
+      hashId: "a3f19c04d2e7", // Route Key column (see rhino.config.ts)
       title: "Sample Title 1",
       description: "Sample Description content for row 1.",
       status: "todo",
@@ -32,6 +33,7 @@ export async function seed(): Promise<void> {
     update: {},
     create: {
       id: 2,
+      hashId: "b8e02d5f61c9", // Route Key column (see rhino.config.ts)
       title: "Sample Title 2",
       description: "Sample Description content for row 2.",
       status: "todo",
@@ -48,6 +50,7 @@ export async function seed(): Promise<void> {
     update: {},
     create: {
       id: 3,
+      hashId: "c14d7a90eb35", // Route Key column (see rhino.config.ts)
       title: "Sample Title 3",
       description: "Sample Description content for row 3.",
       status: "todo",

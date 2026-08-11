@@ -17,6 +17,7 @@ export async function seed(): Promise<void> {
     create: {
       id: 1,
       organizationId: 1,
+      slug: "sample-name-1", // Route Key column (see rhino.config.ts)
       name: "Sample Name 1",
       color: "Sample Color 1",
     },
@@ -28,6 +29,7 @@ export async function seed(): Promise<void> {
     create: {
       id: 2,
       organizationId: 1,
+      slug: "sample-name-2", // Route Key column (see rhino.config.ts)
       name: "Sample Name 2",
       color: "Sample Color 2",
     },
@@ -39,6 +41,7 @@ export async function seed(): Promise<void> {
     create: {
       id: 3,
       organizationId: 1,
+      slug: "sample-name-3", // Route Key column (see rhino.config.ts)
       name: "Sample Name 3",
       color: "Sample Color 3",
     },

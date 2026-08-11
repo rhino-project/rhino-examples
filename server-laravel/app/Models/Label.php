@@ -14,6 +14,13 @@ class Label extends RhinoModel
     // use HasUuid;
     use BelongsToOrganization;
 
+    // ---------------------------------------------------------------
+    // Route Key (see "Route Key" in the Rhino docs)
+    // ---------------------------------------------------------------
+    // Member endpoints (show/update/destroy/restore/force-delete) match the
+    // {id} URL segment against `slug` instead of the primary key.
+    public static string $routeKey = 'slug';
+
     protected $fillable = [
             'organization_id',
             'name',
@@ -43,6 +50,7 @@ class Label extends RhinoModel
     public static $defaultSort = 'created_at';
     public static $allowedFields = [
             'id',
+            'slug',
             'name',
             'color',
             'created_at',

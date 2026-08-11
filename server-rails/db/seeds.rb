@@ -159,6 +159,7 @@ end
 # ---------------------------------------------------------------
 # 6. Tasks
 # ---------------------------------------------------------------
+# Route Key: tasks are addressed by hash_id in member URLs (rhino_route_key).
 task1 = Task.find_or_create_by!(
   title: "Design homepage mockup",
   project_id: website_redesign.id
@@ -169,6 +170,7 @@ task1 = Task.find_or_create_by!(
   t.estimated_hours = 16.00
   t.due_date = "2026-02-28"
   t.assignee_id = carol.id
+  t.hash_id = SecureRandom.hex(6)
 end
 
 task2 = Task.find_or_create_by!(
@@ -181,6 +183,7 @@ task2 = Task.find_or_create_by!(
   t.estimated_hours = 8.00
   t.due_date = "2026-03-15"
   t.assignee_id = bob.id
+  t.hash_id = SecureRandom.hex(6)
 end
 
 task3 = Task.find_or_create_by!(
@@ -193,6 +196,7 @@ task3 = Task.find_or_create_by!(
   t.estimated_hours = 4.00
   t.due_date = "2026-02-15"
   t.assignee_id = alice.id
+  t.hash_id = SecureRandom.hex(6)
 end
 
 task4 = Task.find_or_create_by!(
@@ -205,26 +209,36 @@ task4 = Task.find_or_create_by!(
   t.estimated_hours = 12.00
   t.due_date = "2026-04-30"
   t.assignee_id = bob.id
+  t.hash_id = SecureRandom.hex(6)
 end
 
 # ---------------------------------------------------------------
 # 7. Labels
 # ---------------------------------------------------------------
+# Route Key: labels are addressed by slug in member URLs (rhino_route_key).
 label_bug = Label.find_or_create_by!(name: "bug", organization_id: acme.id) do |l|
   l.color = "#e11d48"
+  l.slug = "bug"
 end
 
 label_feature = Label.find_or_create_by!(name: "feature", organization_id: acme.id) do |l|
   l.color = "#2563eb"
+  l.slug = "feature"
 end
 
 label_urgent = Label.find_or_create_by!(name: "urgent", organization_id: acme.id) do |l|
   l.color = "#f59e0b"
+  l.slug = "urgent"
 end
 
 label_docs = Label.find_or_create_by!(name: "documentation", organization_id: acme.id) do |l|
   l.color = "#10b981"
+  l.slug = "documentation"
 end
+
+# Backfill route keys for records seeded before the columns existed
+Task.where(hash_id: nil).find_each { |t| t.update!(hash_id: SecureRandom.hex(6)) }
+Label.where(slug: nil).find_each { |l| l.update!(slug: l.name.parameterize) }
 
 # Attach labels to tasks
 task1.labels << label_feature unless task1.labels.include?(label_feature)

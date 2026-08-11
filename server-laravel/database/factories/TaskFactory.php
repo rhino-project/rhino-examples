@@ -12,6 +12,8 @@ class TaskFactory extends Factory
     public function definition(): array
     {
         return [
+            // Route Key feature: short random hex identifier used in URLs.
+            'hash_id' => bin2hex(random_bytes(6)),
             'title' => fake()->sentence(3),
             'description' => fake()->optional()->paragraph(),
             'status' => fake()->sentence(3),

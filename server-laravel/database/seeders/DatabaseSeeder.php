@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -226,6 +227,14 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Route Key feature: tasks are addressed by hash_id in URLs, so every
+        // seeded task gets a short random hex identifier.
+        foreach ([$task1, $task2, $task3, $task4] as $task) {
+            if (! $task->hash_id) {
+                $task->forceFill(['hash_id' => bin2hex(random_bytes(6))])->save();
+            }
+        }
+
         // ---------------------------------------------------------------
         // 7. Labels
         // ---------------------------------------------------------------
@@ -248,6 +257,14 @@ class DatabaseSeeder extends Seeder
             ['name' => 'documentation', 'organization_id' => $acme->id],
             ['color' => '#10b981']
         );
+
+        // Route Key feature: labels are addressed by slug in URLs, so every
+        // seeded label gets a kebab-case slug derived from its name.
+        foreach ([$labelBug, $labelFeature, $labelUrgent, $labelDocs] as $label) {
+            if (! $label->slug) {
+                $label->forceFill(['slug' => Str::slug($label->name)])->save();
+            }
+        }
 
         // Attach labels to tasks
         $task1->labels()->syncWithoutDetaching([$labelFeature->id]);

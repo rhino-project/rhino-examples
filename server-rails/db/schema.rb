@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_01_000021) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_01_000022) do
   create_table "audit_logs", force: :cascade do |t|
     t.string "action", null: false
     t.bigint "auditable_id", null: false
@@ -51,9 +51,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000021) do
     t.datetime "discarded_at"
     t.string "name", null: false
     t.integer "organization_id", null: false
+    t.string "slug"
     t.datetime "updated_at", null: false
     t.index ["discarded_at"], name: "index_labels_on_discarded_at"
     t.index ["organization_id"], name: "index_labels_on_organization_id"
+    t.index ["slug"], name: "index_labels_on_slug", unique: true
   end
 
   create_table "org_role_permissions", force: :cascade do |t|
@@ -118,6 +120,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000021) do
     t.datetime "discarded_at"
     t.date "due_date"
     t.decimal "estimated_hours", precision: 8, scale: 2
+    t.string "hash_id"
     t.string "priority", default: "medium", null: false
     t.integer "project_id", null: false
     t.string "status", default: "todo", null: false
@@ -125,6 +128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000021) do
     t.datetime "updated_at", null: false
     t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
     t.index ["discarded_at"], name: "index_tasks_on_discarded_at"
+    t.index ["hash_id"], name: "index_tasks_on_hash_id", unique: true
     t.index ["project_id"], name: "index_tasks_on_project_id"
   end
 

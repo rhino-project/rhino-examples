@@ -51,7 +51,7 @@ it('admin can update a task', function () {
     $task = Task::factory()->create(['project_id' => $this->project->id]);
 
     $response = $this->actingAs($user)
-        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->id, [
+        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id, [
             'title' => 'Updated Task',
             'status' => $task->status,
             'priority' => $task->priority,
@@ -67,7 +67,7 @@ it('admin can delete a task', function () {
     $task = Task::factory()->create(['project_id' => $this->project->id]);
 
     $response = $this->actingAs($user)
-        ->deleteJson('/api/' . $this->org->slug . '/tasks/' . $task->id);
+        ->deleteJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id);
 
     $response->assertStatus(204);
 });
@@ -120,7 +120,7 @@ it('admin sees estimated_hours', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->getJson('/api/' . $this->org->slug . '/tasks/' . $task->id);
+        ->getJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id);
 
     $response->assertStatus(200);
     expect($response->json())->toHaveKey('estimated_hours');
@@ -138,7 +138,7 @@ it('member cannot see estimated_hours', function () {
     ]);
 
     $response = $this->actingAs($member)
-        ->getJson('/api/' . $this->org->slug . '/tasks/' . $task->id);
+        ->getJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id);
 
     $response->assertStatus(200);
     expect($response->json())->not->toHaveKey('estimated_hours');
@@ -161,7 +161,7 @@ it('member can update task status and description', function () {
     ]);
 
     $response = $this->actingAs($member)
-        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->id, [
+        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id, [
             'status' => 'in_progress',
             'description' => 'Updated description',
         ]);
@@ -182,7 +182,7 @@ it('member cannot update task title (forbidden field)', function () {
     ]);
 
     $response = $this->actingAs($member)
-        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->id, [
+        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id, [
             'title' => 'Should Not Change',
         ]);
 
@@ -222,7 +222,7 @@ it('viewer cannot update a task', function () {
     ]);
 
     $response = $this->actingAs($viewer)
-        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->id, [
+        ->putJson('/api/' . $this->org->slug . '/tasks/' . $task->hash_id, [
             'status' => 'done',
         ]);
 

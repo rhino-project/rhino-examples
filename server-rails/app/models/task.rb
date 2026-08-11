@@ -7,8 +7,12 @@ class Task < Rhino::RhinoModel
   rhino_filters :title, :status, :priority
   rhino_sorts :title, :status, :priority, :due_date
   rhino_default_sort "created_at"
-  rhino_fields :id, :title, :description, :status, :priority, :estimated_hours, :due_date, :project_id, :assignee_id, :created_at, :updated_at
+  rhino_fields :id, :hash_id, :title, :description, :status, :priority, :estimated_hours, :due_date, :project_id, :assignee_id, :created_at, :updated_at
   rhino_includes :project, :assignee
+
+  # Route Key: member endpoints match hash_id instead of the numeric id
+  # (GET /api/{org}/tasks/{hash_id}; numeric ids no longer match).
+  rhino_route_key :hash_id
 
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: %w[todo in_progress in_review done] }, allow_nil: true
