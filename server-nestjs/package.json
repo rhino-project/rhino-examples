@@ -21,7 +21,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.0",
     "@prisma/client": "^5.22.0",
-    "@rhino-dev/rhino-nestjs": "^4.6.0",
+    "@rhino-dev/rhino-nestjs": "^4.6.1",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "passport": "^0.7.0",
