@@ -86,11 +86,11 @@ export function TasksPage() {
                         <span className="faint" style={{ fontSize: 11 }}>{t.assignee?.name ?? '—'}</span>
                         <div className="row gap-2">
                           {col !== 'done' && (
-                            <button className="btn btn-ghost btn-icon" title="Mark done" onClick={async () => { await update.mutateAsync({ id: t.id, data: { status: 'done' } }); toast(`Marked "${t.title}" done`, 'ok'); }}>
+                            <button className="btn btn-ghost btn-icon" title="Mark done" onClick={async () => { await update.mutateAsync({ id: t.hash_id!, data: { status: 'done' } }); toast(`Marked "${t.title}" done`, 'ok'); }}>
                               <Icon.check size={12} />
                             </button>
                           )}
-                          <button className="btn btn-ghost btn-icon" title="Delete" onClick={async () => { if (confirm(`Delete "${t.title}"?`)) { await del.mutateAsync(t.id); toast('Task moved to trash', 'ok'); } }}>
+                          <button className="btn btn-ghost btn-icon" title="Delete" onClick={async () => { if (confirm(`Delete "${t.title}"?`)) { await del.mutateAsync(t.hash_id!); toast('Task moved to trash', 'ok'); } }}>
                             <Icon.trash size={12} />
                           </button>
                         </div>
@@ -117,7 +117,7 @@ export function TasksPage() {
                   <td>{t.assignee?.name ?? <span className="faint">—</span>}</td>
                   <td className="faint">{fmtDate(t.due_date)}</td>
                   <td>
-                    <button className="btn btn-ghost btn-icon" onClick={async () => { if (confirm(`Delete "${t.title}"?`)) { await del.mutateAsync(t.id); toast('Deleted', 'ok'); } }}>
+                    <button className="btn btn-ghost btn-icon" onClick={async () => { if (confirm(`Delete "${t.title}"?`)) { await del.mutateAsync(t.hash_id!); toast('Deleted', 'ok'); } }}>
                       <Icon.trash size={12} />
                     </button>
                   </td>

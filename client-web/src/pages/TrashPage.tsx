@@ -30,13 +30,15 @@ export function TrashPage() {
         ))}
       </div>
       {active === 'projects' && <TrashList<Project> slug="projects" cols={['title', 'status']} />}
-      {active === 'tasks'    && <TrashList<Task>    slug="tasks"    cols={['title', 'status', 'priority']} />}
-      {active === 'labels'   && <TrashList<Label>   slug="labels"   cols={['name', 'color']} />}
+      {/* Tasks and labels are addressed by their Route Key (hash_id / slug), not the numeric id */}
+      {active === 'tasks'    && <TrashList<Task>    slug="tasks"    cols={['title', 'status', 'priority']} idOf={t => t.hash_id!} />}
+      {active === 'labels'   && <TrashList<Label>   slug="labels"   cols={['name', 'color']} idOf={l => l.slug!} />}
     </>
   );
 }
 
-function TrashList<T extends { id: number; deleted_at?: string | null }>({ slug, cols }: { slug: Slug; cols: (keyof T)[] }) {
+function TrashList<T extends { id: number; deleted_at?: string | null }>({ slug, cols, idOf }: { slug: Slug; cols: (keyof T)[]; idOf?: (item: T) => string | number }) {
+  const identifier = idOf ?? ((item: T) => item.id);
   const toast   = useToast();
   const trashed = useModelTrashed<T>(slug);
   const restore = useModelRestore<T>(slug);
@@ -57,10 +59,10 @@ function TrashList<T extends { id: number; deleted_at?: string | null }>({ slug,
               <td className="faint">{fmtRelative(item.deleted_at)}</td>
               <td>
                 <div className="row gap-2" style={{ justifyContent: 'end' }}>
-                  <button className="btn btn-sm" onClick={async () => { await restore.mutateAsync(item.id); toast('Restored', 'ok'); }}>
+                  <button className="btn btn-sm" onClick={async () => { await restore.mutateAsync(identifier(item)); toast('Restored', 'ok'); }}>
                     <Icon.restore size={12} /> Restore
                   </button>
-                  <button className="btn btn-sm btn-danger" onClick={async () => { if (confirm('Permanently delete? This cannot be undone.')) { await fdel.mutateAsync(item.id); toast('Permanently deleted', 'ok'); } }}>
+                  <button className="btn btn-sm btn-danger" onClick={async () => { if (confirm('Permanently delete? This cannot be undone.')) { await fdel.mutateAsync(identifier(item)); toast('Permanently deleted', 'ok'); } }}>
                     <Icon.trash size={12} />
                   </button>
                 </div>

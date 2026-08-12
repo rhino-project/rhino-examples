@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useModelIndex, useInvitations, useInviteUser, useCancelInvitation, useResendInvitation } from '@rhino-dev/rhino-react';
-import type { User } from '../types';
+import type { Role, User } from '../types';
 import { Icon } from '../components/Icons';
 import { useToast } from '../components/Toaster';
 import { fmtRelative, initials } from '../lib/format';
@@ -9,6 +9,7 @@ import { Loading } from './DashboardPage';
 export function MembersPage() {
   const toast = useToast();
   const users       = useModelIndex<User>('users', { perPage: 200 });
+  const roles       = useModelIndex<Role>('roles', { perPage: 50 });
   const invitations = useInvitations();
   const invite      = useInviteUser();
   const resend      = useResendInvitation();
@@ -59,7 +60,9 @@ export function MembersPage() {
               <form className="form" onSubmit={async e => {
                 e.preventDefault();
                 try {
-                  await invite.mutateAsync({ email, role });
+                  const roleId = (roles.data?.data ?? []).find(r => r.slug === role)?.id;
+                  if (!roleId) { toast('Roles not loaded yet', 'error'); return; }
+                  await invite.mutateAsync({ email, role_id: roleId });
                   toast(`Invitation sent to ${email}`, 'ok');
                   setEmail('');
                 } catch (err) { toast(`Failed: ${(err as Error).message}`, 'error'); }

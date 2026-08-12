@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="header-actions">
           {orgSlug && <span className="header-org-slug">/{orgSlug}</span>}
           <UserChip />
-          <button className="btn btn-ghost btn-sm" onClick={logout} title="Sign out">
+          <button className="btn btn-ghost btn-sm" onClick={() => logout()} title="Sign out">
             <Icon.logout size={14} /> Sign out
           </button>
         </div>

@@ -72,6 +72,8 @@ export interface components {
         };
         Label: {
             id?: number;
+            /** Route Key — labels are addressed as /labels/{slug} */
+            slug?: string;
             organization_id?: number;
             name?: string;
             color?: string | null;
@@ -103,6 +105,8 @@ export interface components {
         };
         Task: {
             id?: number;
+            /** Route Key — tasks are addressed as /tasks/{hash_id} */
+            hash_id?: string;
             title?: string;
             description?: string | null;
             status?: string;

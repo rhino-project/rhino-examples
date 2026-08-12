@@ -3,6 +3,7 @@
 return [
     'models' => [
         'organizations' => \App\Models\Organization::class,
+        'users' => \App\Models\User::class,
         'roles' => \App\Models\Role::class,
         'comments' => \App\Models\Comment::class,
         'labels' => \App\Models\Label::class,

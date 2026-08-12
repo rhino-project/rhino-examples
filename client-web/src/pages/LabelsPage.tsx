@@ -63,8 +63,8 @@ export function LabelsPage() {
               {list.map(l => (
                 <LabelRow
                   key={l.id} label={l}
-                  onRename={async name => { await update.mutateAsync({ id: l.id, data: { name } }); toast('Renamed', 'ok'); }}
-                  onDelete={async () => { if (confirm(`Delete "${l.name}"?`)) { await del.mutateAsync(l.id); toast('Deleted', 'ok'); } }}
+                  onRename={async name => { await update.mutateAsync({ id: l.slug!, data: { name } }); toast('Renamed', 'ok'); }}
+                  onDelete={async () => { if (confirm(`Delete "${l.name}"?`)) { await del.mutateAsync(l.slug!); toast('Deleted', 'ok'); } }}
                 />
               ))}
             </div>
