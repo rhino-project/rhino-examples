@@ -104,6 +104,35 @@ class Task extends RhinoModel
     // protected static $additionalHiddenColumns = [];
 
     // ---------------------------------------------------------------
+    // Computed attributes (see "Computed Attributes" in the Rhino docs)
+    // ---------------------------------------------------------------
+
+    // OPT-IN per-row values: nothing is evaluated unless the client asks for it
+    // by name via ?computed_attributes=comment_count,is_overdue
+    public function rhinoRecordComputedAttributes(): array
+    {
+        return [
+            'comment_count' => fn ($record, $user) => $record->comments()->count(),
+            'is_overdue' => fn ($record, $user) => $record->due_date !== null
+                && $record->status !== 'done'
+                && $record->due_date < now(),
+        ];
+    }
+
+    // COLLECTION-level aggregates: evaluated ONCE per request over the scoped,
+    // filtered query. Served by GET /api/{org}/tasks/computed?attributes=...
+    public static function rhinoCollectionComputedAttributes(): array
+    {
+        return [
+            'total_count' => fn ($query, $user) => $query->count(),
+            'open_tasks_count' => fn ($query, $user) => $query->where('status', '!=', 'done')->count(),
+            'done_tasks_count' => fn ($query, $user) => $query->where('status', 'done')->count(),
+            'high_priority_count' => fn ($query, $user) => $query->where('priority', 'high')->count(),
+            'estimated_hours_total' => fn ($query, $user) => (float) $query->sum('estimated_hours'),
+        ];
+    }
+
+    // ---------------------------------------------------------------
     // Relationships
     // ---------------------------------------------------------------
 

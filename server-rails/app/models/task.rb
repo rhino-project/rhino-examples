@@ -18,6 +18,33 @@ class Task < Rhino::RhinoModel
   validates :status, inclusion: { in: %w[todo in_progress in_review done] }, allow_nil: true
   validates :priority, inclusion: { in: %w[low medium high critical] }, allow_nil: true
 
+  # ---------------------------------------------------------------
+  # Computed attributes (see "Computed Attributes" in the Rhino docs)
+  # ---------------------------------------------------------------
+
+  # OPT-IN per-row values: nothing is evaluated unless the client asks for it
+  # by name via ?computed_attributes=comment_count,is_overdue
+  def rhino_record_computed_attributes
+    {
+      "comment_count" => ->(record, _user) { record.comments.count },
+      "is_overdue" => lambda { |record, _user|
+        record.due_date.present? && record.status != "done" && record.due_date < Date.current
+      }
+    }
+  end
+
+  # COLLECTION-level aggregates: evaluated ONCE per request over the scoped,
+  # filtered relation. Served by GET /api/{org}/tasks/computed?attributes=...
+  def self.rhino_collection_computed_attributes
+    {
+      "total_count" => ->(scope, _user) { scope.count },
+      "open_tasks_count" => ->(scope, _user) { scope.where.not(status: "done").count },
+      "done_tasks_count" => ->(scope, _user) { scope.where(status: "done").count },
+      "high_priority_count" => ->(scope, _user) { scope.where(priority: "high").count },
+      "estimated_hours_total" => ->(scope, _user) { scope.sum(:estimated_hours).to_f }
+    }
+  end
+
   belongs_to :project
   belongs_to :assignee, class_name: "User", optional: true
   has_many :comments, dependent: :destroy

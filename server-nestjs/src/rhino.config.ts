@@ -27,7 +27,39 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
       projects: { ...projectsRegistration, model: 'project' },
       // Route Key: match member routes (/tasks/:id) on hashId instead of
       // the numeric primary key. PK values no longer resolve.
-      tasks: { ...tasksRegistration, model: 'task', scopes: [TaskScope], routeKey: 'hashId' },
+      tasks: {
+        ...tasksRegistration,
+        model: 'task',
+        scopes: [TaskScope],
+        routeKey: 'hashId',
+        // Computed attributes (see "Computed Attributes" in the Rhino docs).
+        // OPT-IN per-row values — nothing is evaluated unless the client asks
+        // for it by name via ?computed_attributes=isOverdue
+        recordComputedAttributes: {
+          isOverdue: (record: any) =>
+            record.dueDate != null &&
+            record.status !== 'done' &&
+            new Date(record.dueDate) < new Date(),
+        },
+        // COLLECTION-level aggregates — awaited ONCE per request over the
+        // scoped, filtered where. GET /api/{org}/tasks/computed?attributes=...
+        collectionComputedAttributes: {
+          totalCount: (ctx: any) => ctx.delegate.count({ where: ctx.where }),
+          openTasksCount: (ctx: any) =>
+            ctx.delegate.count({ where: { ...ctx.where, status: { not: 'done' } } }),
+          doneTasksCount: (ctx: any) =>
+            ctx.delegate.count({ where: { ...ctx.where, status: 'done' } }),
+          highPriorityCount: (ctx: any) =>
+            ctx.delegate.count({ where: { ...ctx.where, priority: 'high' } }),
+          estimatedHoursTotal: async (ctx: any) => {
+            const r = await ctx.delegate.aggregate({
+              where: ctx.where,
+              _sum: { estimatedHours: true },
+            });
+            return Number(r._sum.estimatedHours ?? 0);
+          },
+        },
+      },
       comments: { ...commentsRegistration, model: 'comment' },
       // Route Key: labels are addressed by slug (/labels/:id → slug column).
       labels: { ...labelsRegistration, model: 'label', routeKey: 'slug' },
