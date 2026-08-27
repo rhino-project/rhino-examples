@@ -22,6 +22,19 @@ Rhino.configure do |config|
     middleware: [Rhino::Middleware::ResolveOrganizationFromRoute],
     models: :all
 
+  # Back office. It has NO tenant boundary: its operators are meant to see every
+  # organization's rows, so `tenant: false` tells Rhino.query not to require an
+  # organization there (and not to raise). The tenant group above is untouched
+  # and keeps failing closed.
+  #
+  # `models: []` on purpose: this group exists to declare the boundary for the
+  # CUSTOM admin controller, not to expose a second, unscoped copy of the CRUD
+  # API. A real back office would list the models it administers across tenants.
+  config.route_group :admin,
+    prefix: "admin",
+    tenant: false,
+    models: []
+
   # ---------------------------------------------------------------
   # Auth / Group membership
   # ---------------------------------------------------------------

@@ -8,6 +8,32 @@ use Rhino\Http\Middleware\EnforceGroupMembership;
 
 /*
 |--------------------------------------------------------------------------
+| Custom Back-Office Routes (non-tenant route group)
+|--------------------------------------------------------------------------
+|
+| These run OUTSIDE any tenant: no {organization} segment and no
+| ResolveOrganizationFromRoute middleware, so no organization is ever resolved.
+|
+| ->defaults('route_group', 'admin') places them in the 'admin' group, which
+| config/rhino.php declares 'tenant' => false. That is what lets Rhino::query()
+| span every organization here instead of throwing MissingTenantContext. Rhino's
+| own generated routes carry this default automatically; a route you register
+| yourself has to say which group it belongs to — the same tag membership and
+| policies already resolve the group from.
+|
+| The probe route below is deliberately tagged with the TENANT group instead, so
+| the same resolver call still fails closed with no organization in context.
+*/
+Route::middleware(['auth:sanctum'])
+    ->get('admin/dashboard', [\App\Http\Controllers\AdminDashboardController::class, 'summary'])
+    ->defaults('route_group', 'admin');
+
+Route::middleware(['auth:sanctum'])
+    ->get('admin/tenant-probe', [\App\Http\Controllers\AdminDashboardController::class, 'tenantProbe'])
+    ->defaults('route_group', 'tenant');
+
+/*
+|--------------------------------------------------------------------------
 | Custom Dashboard Route (demonstrates Rhino::query resource-scope resolver)
 |--------------------------------------------------------------------------
 |
@@ -20,7 +46,9 @@ use Rhino\Http\Middleware\EnforceGroupMembership;
 */
 Route::middleware(['auth:sanctum', \Rhino\Http\Middleware\ResolveOrganizationFromRoute::class])
     ->get('{organization}/dashboard', [\App\Http\Controllers\DashboardController::class, 'summary'])
-    ->where('organization', '[^/]+');
+    ->where('organization', '[^/]+')
+    ->defaults('route_group', 'tenant');
+
 
 /*
 |--------------------------------------------------------------------------

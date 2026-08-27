@@ -39,6 +39,22 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
         prefix: ':organization',
         models: '*',
       },
+      // Back office. It has NO tenant boundary: its operators are meant to see
+      // every organization's rows, so `tenant: false` tells the resource-scope
+      // resolver not to require an organization there (and not to throw
+      // TENANT_CONTEXT_REQUIRED). The tenant group above is untouched and keeps
+      // failing closed. Declaring the group also makes `/api/admin/*` a
+      // non-tenant path for createTenantRouteRewrite, so its first segment is
+      // never mistaken for an organization slug.
+      //
+      // `models: []` on purpose: this group exists to declare the boundary for
+      // the CUSTOM admin controller, not to expose a second, unscoped copy of
+      // the CRUD API.
+      admin: {
+        prefix: 'admin',
+        tenant: false,
+        models: [],
+      },
     },
     multiTenant: {
       enabled: true,

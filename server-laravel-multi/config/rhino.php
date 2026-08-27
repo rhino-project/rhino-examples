@@ -15,6 +15,21 @@ return [
             'middleware' => [\Rhino\Http\Middleware\ResolveOrganizationFromRoute::class],
             'models' => '*',
         ],
+        // Back office. It has NO tenant boundary: its operators are meant to see
+        // every organization's rows, so 'tenant' => false tells Rhino::query()
+        // not to require an organization there (and not to throw). The tenant
+        // group above is untouched and keeps failing closed.
+        //
+        // 'models' => [] on purpose: this group exists to declare the boundary
+        // for the CUSTOM admin route registered in routes/api.php, not to expose
+        // a second, unscoped copy of the CRUD API. A real back office would list
+        // the models it wants to administer across tenants.
+        'admin' => [
+            'prefix' => 'admin',
+            'tenant' => false,
+            'middleware' => [],
+            'models' => [],
+        ],
     ],
     // Group-membership enforcement stays OFF in this multitenant-only variant:
     // behavior is byte-for-byte the current example. The user_roles.route_group
