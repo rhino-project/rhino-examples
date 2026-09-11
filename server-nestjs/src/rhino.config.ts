@@ -30,6 +30,8 @@ import {
 export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
   return {
     prismaClient: prisma as any,
+    // How many named scopes one request may combine (403 over the cap).
+    maxScopesPerRequest: 3,
     models: {
       projects: { ...projectsRegistration, model: 'project' },
       // Route Key: match member routes (/tasks/:id) on hashId instead of

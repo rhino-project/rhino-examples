@@ -266,7 +266,7 @@ GEM
       io-console (~> 0.5)
     request_store (1.7.0)
       rack (>= 1.4)
-    rhino-rails (4.8.0)
+    rhino-rails (4.8.1)
       bcrypt (~> 3.1)
       discard (~> 1.3)
       pagy (~> 9.0)
@@ -406,7 +406,7 @@ DEPENDENCIES
   kamal
   puma (>= 5.0)
   rails (~> 8.1.3)
-  rhino-rails (~> 4.8.0)
+  rhino-rails (~> 4.8.1)
   rspec-rails (~> 7.0)
   rubocop-rails-omakase
   solid_cable
@@ -521,7 +521,7 @@ CHECKSUMS
   regexp_parser (2.12.0) sha256=35a916a1d63190ab5c9009457136ae5f3c0c7512d60291d0d1378ba18ce08ebb
   reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
   request_store (1.7.0) sha256=e1b75d5346a315f452242a68c937ef8e48b215b9453a77a6c0acdca2934c88cb
-  rhino-rails (4.8.0) sha256=8eacd47be12fc49db57359df370d9413c4bfa61c544279adf35930a5bf8065d0
+  rhino-rails (4.8.1) sha256=d1953215d5e9324e11b59b11cb104b6755dc8138f9a0de1fd97c2aa1ad278fed
   rspec-core (3.13.6) sha256=a8823c6411667b60a8bca135364351dda34cd55e44ff94c4be4633b37d828b2d
   rspec-expectations (3.13.5) sha256=33a4d3a1d95060aea4c94e9f237030a8f9eae5615e9bd85718fe3a09e4b58836
   rspec-mocks (3.13.8) sha256=086ad3d3d17533f4237643de0b5c42f04b66348c28bf6b9c2d3f4a3b01af1d47

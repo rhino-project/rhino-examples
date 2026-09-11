@@ -20,6 +20,9 @@ return [
     'multi_tenant' => [
         'organization_identifier_column' => 'slug',
     ],
+    // How many named scopes one request may combine (403 over the cap).
+    'max_scopes_per_request' => 3,
+
     'invitations' => [
         'expires_days' => env('INVITATION_EXPIRES_DAYS', 7),
         'allowed_roles' => null,

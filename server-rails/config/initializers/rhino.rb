@@ -7,6 +7,9 @@ Rhino.configure do |config|
   # ---------------------------------------------------------------
   # Models
   # ---------------------------------------------------------------
+  # How many named scopes one request may combine (403 over the cap).
+  config.max_scopes_per_request = 3
+
   config.model :organizations, "Organization"
   config.model :roles, "Role"
   config.model :projects, "Project"
