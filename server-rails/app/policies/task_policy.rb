@@ -19,6 +19,16 @@ class TaskPolicy < Rhino::ResourcePolicy
     end
   end
 
+  # Named scopes each role may select with ?scope=. Everyone can list their own
+  # work; the date-window scopes are for the roles that plan schedules.
+  def permitted_scopes(user)
+    if has_role?(user, "owner") || has_role?(user, "admin") || has_role?(user, "manager")
+      ["*"]
+    else
+      %w[assigned_to_me by_status]
+    end
+  end
+
   def permitted_attributes_for_create(user)
     if has_role?(user, "owner") || has_role?(user, "admin") || has_role?(user, "manager")
       %w[title description status priority estimated_hours due_date project_id assignee_id]

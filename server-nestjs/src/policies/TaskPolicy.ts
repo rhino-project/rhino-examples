@@ -30,6 +30,21 @@ export class TaskPolicy extends ResourcePolicy {
     return [];
   }
 
+  /**
+   * Named scopes each role may select with ?scope=. Everyone can list their own
+   * work; the date-window scopes are for the roles that plan schedules.
+   */
+  override permittedScopes(user: any, org?: any): string[] {
+    if (
+      this.hasRole(user, 'owner', org) ||
+      this.hasRole(user, 'admin', org) ||
+      this.hasRole(user, 'manager', org)
+    ) {
+      return ['*'];
+    }
+    return ['assignedToMe', 'byStatus'];
+  }
+
   override permittedAttributesForCreate(user: any, org?: any): string[] {
     if (this.hasRole(user, 'owner', org) ||
       this.hasRole(user, 'admin', org) ||

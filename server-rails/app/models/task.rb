@@ -7,6 +7,58 @@ class Task < Rhino::RhinoModel
   rhino_filters :title, :status, :priority
   rhino_sorts :title, :status, :priority, :due_date
   rhino_default_sort "created_at"
+
+  # ---------------------------------------------------------------
+  # Named scopes selectable with ?scope=
+  # ---------------------------------------------------------------
+  #
+  #   ?scope=assignedToMe                                  no arguments
+  #   ?scope[dueBefore]=2026-12-31                         one declared parameter
+  #   ?scope[dueBetween][from]=a&scope[dueBetween][to]=b   named parameters
+  #   ?scope[byStatus][status]=todo                        'priority' is optional
+  #
+  rhino_scopes :active,
+               assigned_to_me: { with: lambda { |relation, user|
+                 user ? relation.where(assignee_id: user.id) : relation.none
+               } },
+               due_before: { params: [:date] },
+               due_between: { params: %i[from to] },
+               by_status: { params: %i[status priority], optional: [:priority] }
+  rhino_default_scope :active
+
+  scope :active, -> { where.not(status: "done") }
+  scope :due_before, ->(date) { where.not(due_date: nil).where("due_date < ?", date) }
+  scope :due_between, ->(from, to) { where(due_date: from..to) }
+  scope :by_status, lambda { |status, priority = nil|
+    relation = where(status: status)
+    priority ? relation.where(priority: priority) : relation
+  }
+
+  # ---------------------------------------------------------------
+  # Named scopes selectable with ?scope=
+  # ---------------------------------------------------------------
+  #
+  #   ?scope=assignedToMe                                  no arguments
+  #   ?scope[dueBefore]=2026-12-31                         one declared parameter
+  #   ?scope[dueBetween][from]=a&scope[dueBetween][to]=b   named parameters
+  #   ?scope[byStatus][status]=todo                        'priority' is optional
+  #
+  rhino_scopes :active,
+               assigned_to_me: { with: lambda { |relation, user|
+                 user ? relation.where(assignee_id: user.id) : relation.none
+               } },
+               due_before: { params: [:date] },
+               due_between: { params: %i[from to] },
+               by_status: { params: %i[status priority], optional: [:priority] }
+  rhino_default_scope :active
+
+  scope :active, -> { where.not(status: "done") }
+  scope :due_before, ->(date) { where.not(due_date: nil).where("due_date < ?", date) }
+  scope :due_between, ->(from, to) { where(due_date: from..to) }
+  scope :by_status, lambda { |status, priority = nil|
+    relation = where(status: status)
+    priority ? relation.where(priority: priority) : relation
+  }
   rhino_fields :id, :hash_id, :title, :description, :status, :priority, :estimated_hours, :due_date, :project_id, :assignee_id, :created_at, :updated_at
   rhino_includes :project, :assignee
 

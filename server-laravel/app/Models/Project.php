@@ -42,13 +42,17 @@ class Project extends RhinoModel
     // Query Builder configuration (used by Rhino's GlobalController)
     // ---------------------------------------------------------------
 
+    // 'budget' is queryable here, but the policy hides it from members and
+    // viewers — for them ?filter[budget]= and ?sort=budget return 403.
     public static $allowedFilters = [
             'title',
             'status',
+            'budget',
         ];
     public static $allowedSorts = [
             'title',
             'status',
+            'budget',
             'starts_at',
             'ends_at',
         ];
@@ -66,7 +70,12 @@ class Project extends RhinoModel
             'updated_at',
         ];
     public static $allowedIncludes = [];
-    // public static $allowedSearch = [];
+    // 'internal_notes' is hidden from everyone but owners and admins, so for
+    // everyone else ?search= quietly skips it and only matches on the title.
+    public static $allowedSearch = [
+            'title',
+            'internal_notes',
+        ];
 
     // ---------------------------------------------------------------
     // Pagination (uncomment to enable default pagination)

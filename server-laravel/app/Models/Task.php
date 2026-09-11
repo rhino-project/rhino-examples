@@ -62,6 +62,23 @@ class Task extends RhinoModel
             'due_date',
         ];
     public static $defaultSort = 'created_at';
+
+    // ---------------------------------------------------------------
+    // Named scopes selectable with ?scope=
+    // ---------------------------------------------------------------
+    //
+    //   ?scope=assignedToMe                              no arguments
+    //   ?scope[dueBefore]=2026-12-31                     one declared parameter
+    //   ?scope[dueBetween][from]=a&scope[dueBetween][to]=b    named parameters
+    //   ?scope[byStatus][status]=todo                    'priority' is optional
+    //
+    public static $allowedScopes = [
+            'assignedToMe',
+            'dueBefore' => 'date',
+            'dueBetween' => ['from', 'to'],
+            'byStatus' => ['params' => ['status', 'priority'], 'optional' => ['priority']],
+        ];
+    public static $defaultScope = 'active';
     public static $allowedFields = [
             'id',
             'hash_id',
@@ -130,6 +147,46 @@ class Task extends RhinoModel
             'high_priority_count' => fn ($query, $user) => $query->where('priority', 'high')->count(),
             'estimated_hours_total' => fn ($query, $user) => (float) $query->sum('estimated_hours'),
         ];
+    }
+
+    // ---------------------------------------------------------------
+    // Named scope bodies. Each receives the current user first, then the
+    // parameters declared in $allowedScopes, in that order.
+    // ---------------------------------------------------------------
+
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', '!=', 'done');
+    }
+
+    public function scopeAssignedToMe(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user): \Illuminate\Database\Eloquent\Builder
+    {
+        if (! $user) {
+            return $query->whereRaw('1 = 0'); // fail closed
+        }
+
+        return $query->where('assignee_id', $user->id);
+    }
+
+    public function scopeDueBefore(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user, $date): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereNotNull('due_date')->whereDate('due_date', '<', $date);
+    }
+
+    public function scopeDueBetween(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user, $from, $to): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereBetween('due_date', [$from, $to]);
+    }
+
+    public function scopeByStatus(\Illuminate\Database\Eloquent\Builder $query, ?\Illuminate\Contracts\Auth\Authenticatable $user, $status, $priority = null): \Illuminate\Database\Eloquent\Builder
+    {
+        $query->where('status', $status);
+
+        if ($priority !== null) {
+            $query->where('priority', $priority);
+        }
+
+        return $query;
     }
 
     // ---------------------------------------------------------------

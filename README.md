@@ -40,7 +40,7 @@ All five apps share the same product spec — see [`PRD.md`](./PRD.md) for the 2
 
 ## Configuration variants
 
-> These build the **same TaskFlow domain** in three multi-tenancy shapes (single / multi / hybrid) across all three backends. Like the base apps, they install the libraries **from the registry** (Composer `^4.2.0`, Bundler `~> 4.2.0`, npm `^4.2.0`) — no local checkout of the `rhino-*` repos required.
+> These build the **same TaskFlow domain** in three multi-tenancy shapes (single / multi / hybrid) across all three backends. Like the base apps, they install the libraries **from the registry** (Composer `^4.8.0`, Bundler `~> 4.8.0`, npm `^4.8.0`) — no local checkout of the `rhino-*` repos required.
 
 The base `server-laravel` / `server-rails` / `server-nestjs` above show **one** multi-tenancy shape: the classic path-prefix tenant (`/api/{org}/...`). Real apps come in more shapes, and Rhino expresses them with route-group **config**, not controllers. These variants build the **same TaskFlow domain** three different ways, in **all three backends**, so you can see and test each end to end:
 
@@ -228,6 +228,8 @@ Log in as different users to see Rhino's per-attribute RBAC in action:
 - **`alice` vs `dave`** — fetch `GET /api/acme/projects/1`. Alice gets `budget` and `internal_notes`. Dave's response simply omits those keys — same endpoint, different shape, zero controller code.
 - **Multi-tenancy** — try `GET /api/globex/projects` as `alice@acme.com`. 403. The org slug is enforced on every route.
 - **Query string superpowers** — `GET /api/acme/tasks?filter[status]=open&sort=-created_at&include=assignee,labels&search=deploy`. All free.
+- **Named scopes, with arguments** — the Task model declares `assignedToMe`, `dueBefore`, `dueBetween` and `byStatus`. Try `?scope=assignedToMe`, `?scope[dueBefore]=2026-03-01`, or `?scope[dueBetween][from]=2026-03-01&scope[dueBetween][to]=2026-05-01`. As `carol` (member) the date scopes return 403: the policy's `permittedScopes` keeps them for the roles that plan schedules.
+- **Hidden columns are hidden from queries too** — `budget` is filterable and sortable on Project, but the policy hides it from members. `GET /api/acme/projects?sort=-budget` is 200 for `alice` and 403 for `carol`, and `?search=CEO` quietly skips `internal_notes` for anyone who may not read it.
 - **Soft delete + restore** — `DELETE /api/acme/tasks/42` then visit `/api/acme/tasks/42?with_archived=true`.
 - **Audit trail** — every change to a Project shows up in `/api/acme/projects/1/audits`.
 - **Invitations** — `POST /api/acme/invitations` to add a member; they get a tokenized signup link.

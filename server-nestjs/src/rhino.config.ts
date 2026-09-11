@@ -7,6 +7,13 @@ import { commentsRegistration } from './resources/CommentResource';
 import { labelsRegistration } from './resources/LabelResource';
 
 import { TaskScope } from './scopes/TaskScope';
+import {
+  ActiveScope,
+  AssignedToMeScope,
+  ByStatusScope,
+  DueBeforeScope,
+  DueBetweenScope,
+} from './scopes/TaskNamedScopes';
 
 /**
  * Compose Rhino configuration. In 0.2.0 the blueprint generator emits
@@ -31,6 +38,16 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
         ...tasksRegistration,
         model: 'task',
         scopes: [TaskScope],
+        // Client-selectable named scopes (?scope=). Scopes with declared
+        // parameters take them as ?scope[name][param]=value.
+        namedScopes: {
+          active: ActiveScope,
+          assignedToMe: AssignedToMeScope,
+          dueBefore: DueBeforeScope,
+          dueBetween: DueBetweenScope,
+          byStatus: ByStatusScope,
+        },
+        defaultScope: 'active',
         routeKey: 'hashId',
         // Computed attributes (see "Computed Attributes" in the Rhino docs).
         // OPT-IN per-row values — nothing is evaluated unless the client asks

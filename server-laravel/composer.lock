@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "80fefe173c872f2b8cd16424f86ad463",
+    "content-hash": "8fd157c3519ead1726b0d39c0d379701",
     "packages": [
         {
             "name": "brick/math",
@@ -3369,16 +3369,16 @@
         },
         {
             "name": "rhino-project/rhino-laravel",
-            "version": "v4.7.3",
+            "version": "v4.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rhino-project/rhino-laravel.git",
-                "reference": "0d134a94e2c399a2f561de48e078d067f44d18a7"
+                "reference": "6547fb7de501c98275cdc66d00864d52f42e17d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rhino-project/rhino-laravel/zipball/0d134a94e2c399a2f561de48e078d067f44d18a7",
-                "reference": "0d134a94e2c399a2f561de48e078d067f44d18a7",
+                "url": "https://api.github.com/repos/rhino-project/rhino-laravel/zipball/6547fb7de501c98275cdc66d00864d52f42e17d3",
+                "reference": "6547fb7de501c98275cdc66d00864d52f42e17d3",
                 "shasum": ""
             },
             "require": {
@@ -3427,9 +3427,9 @@
             ],
             "support": {
                 "issues": "https://github.com/rhino-project/rhino-laravel/issues",
-                "source": "https://github.com/rhino-project/rhino-laravel/tree/v4.7.3"
+                "source": "https://github.com/rhino-project/rhino-laravel/tree/v4.8.0"
             },
-            "time": "2026-08-27T19:49:53+00:00"
+            "time": "2026-09-11T15:51:13+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",

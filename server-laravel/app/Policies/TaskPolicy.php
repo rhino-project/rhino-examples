@@ -51,6 +51,21 @@ class TaskPolicy extends ResourcePolicy
         return [];
     }
 
+    /**
+     * Named scopes each role may select with ?scope=.
+     *
+     * Everyone can list their own work; the date-window scopes are for the
+     * roles that plan schedules.
+     */
+    public function permittedScopes(?\Illuminate\Contracts\Auth\Authenticatable $user): array
+    {
+        if ($this->hasRole($user, 'owner') || $this->hasRole($user, 'admin') || $this->hasRole($user, 'manager')) {
+            return ['*'];
+        }
+
+        return ['assignedToMe', 'byStatus'];
+    }
+
     public function permittedAttributesForCreate(?\Illuminate\Contracts\Auth\Authenticatable $user): array
     {
         if ($this->hasRole($user, 'owner')

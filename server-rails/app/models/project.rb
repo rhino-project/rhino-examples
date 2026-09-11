@@ -5,8 +5,13 @@ class Project < Rhino::RhinoModel
   include Rhino::BelongsToOrganization
   include Discard::Model
 
-  rhino_filters :title, :status
-  rhino_sorts :title, :status, :starts_at, :ends_at
+  # 'budget' is queryable here, but the policy hides it from members and
+  # viewers — for them ?filter[budget]= and ?sort=budget return 403.
+  rhino_filters :title, :status, :budget
+  rhino_sorts :title, :status, :budget, :starts_at, :ends_at
+  # 'internal_notes' is hidden from everyone but owners and admins, so for
+  # everyone else ?search= quietly skips it and only matches on the title.
+  rhino_search :title, :internal_notes
   rhino_default_sort "created_at"
   rhino_fields :id, :title, :description, :status, :budget, :internal_notes, :starts_at, :ends_at, :created_at, :updated_at
 

@@ -78,8 +78,12 @@ export const projectsRegistration: ModelRegistration = {
   policy: ProjectPolicy,
   validationStore,
   validationUpdate,
-  allowedFilters: ["title","status"],
-  allowedSorts: ["title","status","startsAt","endsAt"],
+  // 'internalNotes' and 'budget' are queryable here, but the policy hides them
+  // from members and viewers — for them ?filter[internalNotes]= and
+  // ?sort=budget return 403. (Prisma wants a real number for a Decimal
+  // column, so 'budget' is demonstrated as a sort rather than a filter.)
+  allowedFilters: ["title","status","internalNotes"],
+  allowedSorts: ["title","status","budget","startsAt","endsAt"],
   allowedSearch: ["title"],
   belongsToOrganization: true,
   softDeletes: true,
