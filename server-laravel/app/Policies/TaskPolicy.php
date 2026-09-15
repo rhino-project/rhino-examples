@@ -36,6 +36,19 @@ class TaskPolicy extends ResourcePolicy
                 'due_date',
                 'project_id',
                 'assignee_id',
+                // Computed attributes go through this same gate. Junior roles
+                // may ask for the windowed counts but not the money-adjacent
+                // or per-status breakdowns (see hiddenAttributesForShow).
+                'comment_count',
+                'is_overdue',
+                'is_due_before',
+                'total_count',
+                'open_tasks_count',
+                'done_tasks_count',
+                'high_priority_count',
+                'tasks_due_between',
+                'count_by_status',
+                'windowed_task_count',
             ];
         }
 
@@ -45,7 +58,12 @@ class TaskPolicy extends ResourcePolicy
     public function hiddenAttributesForShow(?\Illuminate\Contracts\Auth\Authenticatable $user): array
     {
         if ($this->hasRole($user, 'member') || $this->hasRole($user, 'viewer')) {
-            return ['estimated_hours'];
+            // The blacklist beats the whitelist: 'count_by_status' is listed
+            // above and still denied here. A denied computed attribute reports
+            // the same "is not allowed" message an undeclared one does, and
+            // that check runs BEFORE any argument binding — so a junior role
+            // cannot learn an attribute exists by probing its parameters.
+            return ['estimated_hours', 'count_by_status'];
         }
 
         return [];

@@ -5,7 +5,13 @@ class TaskPolicy < Rhino::ResourcePolicy
     if has_role?(user, "owner") || has_role?(user, "admin") || has_role?(user, "manager")
       ["*"]
     elsif has_role?(user, "member") || has_role?(user, "viewer")
-      %w[id title description status priority due_date project_id assignee_id]
+      # Computed attributes go through this same gate. Junior roles may ask for
+      # the windowed counts but not the money-adjacent or per-status
+      # breakdowns (see hidden_attributes_for_show).
+      %w[id title description status priority due_date project_id assignee_id
+         comment_count is_overdue is_due_before
+         total_count open_tasks_count done_tasks_count high_priority_count
+         tasks_due_between count_by_status windowed_task_count]
     else
       []
     end
@@ -13,7 +19,12 @@ class TaskPolicy < Rhino::ResourcePolicy
 
   def hidden_attributes_for_show(user)
     if has_role?(user, "member") || has_role?(user, "viewer")
-      %w[estimated_hours]
+      # The blacklist beats the whitelist: 'count_by_status' is listed above and
+      # still denied here. A denied computed attribute reports the same
+      # "is not allowed" message an undeclared one does, and that check runs
+      # BEFORE any argument binding — so a junior role cannot learn an attribute
+      # exists by probing its parameters.
+      %w[estimated_hours count_by_status]
     else
       []
     end

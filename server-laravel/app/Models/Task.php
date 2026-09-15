@@ -126,6 +126,16 @@ class Task extends RhinoModel
 
     // OPT-IN per-row values: nothing is evaluated unless the client asks for it
     // by name via ?computed_attributes=comment_count,is_overdue
+    //
+    // An attribute may also declare PARAMETERS the client supplies, using the
+    // same bracket wire form named scopes use:
+    //
+    //   ?computed_attributes=comment_count,is_overdue      legacy comma list
+    //   ?computed_attributes[comment_count]=               bracket, no arguments
+    //   ?computed_attributes[is_due_before]=2026-01-01     one declared parameter
+    //   ?computed_attributes[is_due_before][date]=...      named parameter
+    //
+    // Bound arguments arrive after $user, in the order `params` declares them.
     public function rhinoRecordComputedAttributes(): array
     {
         return [
@@ -133,11 +143,28 @@ class Task extends RhinoModel
             'is_overdue' => fn ($record, $user) => $record->due_date !== null
                 && $record->status !== 'done'
                 && $record->due_date < now(),
+
+            // Parameterised record attribute: is this row due before the
+            // client-supplied date?
+            'is_due_before' => [
+                'params' => ['date'],
+                'using' => fn ($record, $user, $date) => $record->due_date !== null
+                    && strtotime((string) $record->due_date) < strtotime((string) $date),
+            ],
         ];
     }
 
     // COLLECTION-level aggregates: evaluated ONCE per request over the scoped,
     // filtered query. Served by GET /api/{org}/tasks/computed?attributes=...
+    //
+    //   ?attributes=total_count,done_tasks_count            legacy comma list
+    //   ?attributes[total_count]=                           bracket, no arguments
+    //   ?attributes[count_by_status]=todo                   one declared parameter
+    //   ?attributes[tasks_due_between][from]=a&...[to]=b    named parameters
+    //
+    // A bare GET /computed still returns everything the policy allows, minus
+    // any attribute with a REQUIRED parameter — those are skipped silently, so
+    // adding one here never breaks a client that asks for everything.
     public static function rhinoCollectionComputedAttributes(): array
     {
         return [
@@ -146,6 +173,43 @@ class Task extends RhinoModel
             'done_tasks_count' => fn ($query, $user) => $query->where('status', 'done')->count(),
             'high_priority_count' => fn ($query, $user) => $query->where('priority', 'high')->count(),
             'estimated_hours_total' => fn ($query, $user) => (float) $query->sum('estimated_hours'),
+
+            // Two required parameters: skipped by a bare /computed.
+            'tasks_due_between' => [
+                'params' => ['from', 'to'],
+                'using' => fn ($query, $user, $from, $to) => $query
+                    ->whereBetween('due_date', [$from, $to])
+                    ->count(),
+            ],
+
+            // One required parameter, so the bare-value form binds it:
+            // ?attributes[count_by_status]=todo
+            'count_by_status' => [
+                'params' => ['status'],
+                'using' => fn ($query, $user, $status) => $query->where('status', $status)->count(),
+            ],
+
+            // Every parameter optional: evaluated with no arguments by a bare
+            // /computed, and narrowed when the client supplies a window.
+            // 'only_high_priority' also shows "true"/"false" coercing to a
+            // real boolean before the callable sees it.
+            'windowed_task_count' => [
+                'params' => ['from', 'to', 'only_high_priority'],
+                'optional' => ['from', 'to', 'only_high_priority'],
+                'using' => function ($query, $user, $from = null, $to = null, $only_high_priority = false) {
+                    if ($from !== null) {
+                        $query->whereDate('due_date', '>=', $from);
+                    }
+                    if ($to !== null) {
+                        $query->whereDate('due_date', '<=', $to);
+                    }
+                    if ($only_high_priority === true) {
+                        $query->where('priority', 'high');
+                    }
+
+                    return $query->count();
+                },
+            ],
         ];
     }
 

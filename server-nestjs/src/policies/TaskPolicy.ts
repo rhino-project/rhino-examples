@@ -17,7 +17,13 @@ export class TaskPolicy extends ResourcePolicy {
     }
     if (this.hasRole(user, 'member', org) ||
       this.hasRole(user, 'viewer', org)) {
-      return ['id', 'title', 'description', 'status', 'priority', 'dueDate', 'projectId', 'assignedTo'];
+      // Computed attributes go through this same gate. Junior roles may ask
+      // for the windowed counts but not the money-adjacent or per-status
+      // breakdowns (see hiddenAttributesForShow).
+      return ['id', 'title', 'description', 'status', 'priority', 'dueDate', 'projectId', 'assignedTo',
+        'isOverdue', 'isDueBefore',
+        'totalCount', 'openTasksCount', 'doneTasksCount', 'highPriorityCount',
+        'tasksDueBetween', 'countByStatus', 'windowedTaskCount'];
     }
     return [];
   }
@@ -25,7 +31,12 @@ export class TaskPolicy extends ResourcePolicy {
   override hiddenAttributesForShow(user: any, org?: any): string[] {
     if (this.hasRole(user, 'member', org) ||
       this.hasRole(user, 'viewer', org)) {
-      return ['estimatedHours'];
+      // The blacklist beats the whitelist: 'countByStatus' is listed above and
+      // still denied here. A denied computed attribute reports the same
+      // "is not allowed" message an undeclared one does, and that check runs
+      // BEFORE any argument binding — so a junior role cannot learn an
+      // attribute exists by probing its parameters.
+      return ['estimatedHours', 'countByStatus'];
     }
     return [];
   }

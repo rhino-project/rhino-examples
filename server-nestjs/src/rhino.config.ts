@@ -54,14 +54,45 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
         // Computed attributes (see "Computed Attributes" in the Rhino docs).
         // OPT-IN per-row values — nothing is evaluated unless the client asks
         // for it by name via ?computed_attributes=isOverdue
+        //
+        // An attribute may also declare PARAMETERS the client supplies, using
+        // the same bracket wire form named scopes use:
+        //
+        //   ?computed_attributes=isOverdue                    legacy comma list
+        //   ?computed_attributes[isOverdue]=                  bracket, no args
+        //   ?computed_attributes[isDueBefore]=2026-01-01      one declared param
+        //   ?computed_attributes[isDueBefore][date]=...       named parameter
+        //
+        // Record callables receive the bound arguments as a named object in
+        // their third parameter. Serialization is synchronous, so a record
+        // callable still cannot be async.
         recordComputedAttributes: {
           isOverdue: (record: any) =>
             record.dueDate != null &&
             record.status !== 'done' &&
             new Date(record.dueDate) < new Date(),
+
+          // Parameterised record attribute: is this row due before the
+          // client-supplied date?
+          isDueBefore: {
+            params: ['date'],
+            using: (record: any, _user: any, args: any) =>
+              record.dueDate != null &&
+              new Date(record.dueDate) < new Date(args.date),
+          },
         },
         // COLLECTION-level aggregates — awaited ONCE per request over the
         // scoped, filtered where. GET /api/{org}/tasks/computed?attributes=...
+        //
+        //   ?attributes=totalCount,doneTasksCount            legacy comma list
+        //   ?attributes[totalCount]=                         bracket, no args
+        //   ?attributes[countByStatus]=todo                  one declared param
+        //   ?attributes[tasksDueBetween][from]=a&...[to]=b   named parameters
+        //
+        // A bare GET /computed still returns everything the policy allows,
+        // minus any attribute with a REQUIRED parameter — those are skipped
+        // silently, so adding one here never breaks a client that asks for
+        // everything.
         collectionComputedAttributes: {
           totalCount: (ctx: any) => ctx.delegate.count({ where: ctx.where }),
           openTasksCount: (ctx: any) =>
@@ -76,6 +107,54 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
               _sum: { estimatedHours: true },
             });
             return Number(r._sum.estimatedHours ?? 0);
+          },
+
+          // Two required parameters: skipped by a bare /computed.
+          tasksDueBetween: {
+            params: ['from', 'to'],
+            using: (ctx: any) =>
+              ctx.delegate.count({
+                where: {
+                  ...ctx.where,
+                  dueDate: {
+                    gte: new Date(ctx.args.from),
+                    lte: new Date(ctx.args.to),
+                  },
+                },
+              }),
+          },
+
+          // One required parameter, so the bare-value form binds it:
+          // ?attributes[countByStatus]=todo
+          countByStatus: {
+            params: ['status'],
+            using: (ctx: any) =>
+              ctx.delegate.count({
+                where: { ...ctx.where, status: ctx.args.status },
+              }),
+          },
+
+          // Every parameter optional: evaluated with no arguments by a bare
+          // /computed, and narrowed when the client supplies a window.
+          // 'onlyHighPriority' also shows "true"/"false" coercing to a real
+          // boolean before the callable sees it.
+          windowedTaskCount: {
+            params: ['from', 'to', 'onlyHighPriority'],
+            optionalParams: ['from', 'to', 'onlyHighPriority'],
+            using: (ctx: any) => {
+              const where: any = { ...ctx.where };
+              const args = ctx.args ?? {};
+              if (args.from != null || args.to != null) {
+                where.dueDate = {
+                  ...(args.from != null ? { gte: new Date(args.from) } : {}),
+                  ...(args.to != null ? { lte: new Date(args.to) } : {}),
+                };
+              }
+              if (args.onlyHighPriority === true) {
+                where.priority = 'high';
+              }
+              return ctx.delegate.count({ where });
+            },
           },
         },
       },
