@@ -6,6 +6,9 @@ import { tasksRegistration } from './resources/TaskResource';
 import { commentsRegistration } from './resources/CommentResource';
 import { labelsRegistration } from './resources/LabelResource';
 
+import { TaskStoreRequest } from './requests/task-store.request';
+import { TaskUpdateRequest } from './requests/task-update.request';
+
 import { TaskScope } from './scopes/TaskScope';
 import {
   ActiveScope,
@@ -40,6 +43,15 @@ export function buildRhinoConfig(prisma: PrismaClient): RhinoConfig {
         ...tasksRegistration,
         model: 'task',
         scopes: [TaskScope],
+        // Request classes own the shape contract for store/update. They take
+        // precedence over the `validationStore` / `validationUpdate` schemas
+        // that TaskResource.ts still declares — left in place on purpose so
+        // this app demonstrates the precedence rule. Every other model here
+        // stays on the (deprecated) model-level schemas.
+        requests: {
+          store: TaskStoreRequest,
+          update: TaskUpdateRequest,
+        },
         // Client-selectable named scopes (?scope=). Scopes with declared
         // parameters take them as ?scope[name][param]=value.
         namedScopes: {
